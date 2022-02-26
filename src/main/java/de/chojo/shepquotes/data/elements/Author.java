@@ -19,6 +19,10 @@ public class Author {
         return new Author(id, guildId, name);
     }
 
+    public static Author unkown(){
+        return of(-1,-1,"Unkown");
+    }
+
     public int id() {
         return id;
     }

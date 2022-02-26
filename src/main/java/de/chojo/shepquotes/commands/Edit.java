@@ -7,14 +7,15 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 
 import javax.sql.DataSource;
 
-public class AddQuote extends SimpleCommand {
-    protected AddQuote(DataSource dataSource) {
-        super("addquote", null, "Add a new quote", argsBuilder()
+public class Edit extends SimpleCommand {
+    protected Edit(DataSource dataSource) {
+        super("edit", null, "Edit a existing quote", argsBuilder()
                 .build(), Permission.UNKNOWN);
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
         // TODO: Implement modal when implemented
+        // https://github.com/DV8FromTheWorld/JDA/pull/2024
     }
 }
