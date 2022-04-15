@@ -22,7 +22,7 @@ dependencies {
     implementation("de.chojo", "cjda-util", "2.0.3-alpha.9")
 
     // database
-    implementation("org.postgresql", "postgresql", "42.3.3")
+    implementation("org.postgresql", "postgresql", "42.3.4")
     implementation("com.zaxxer", "HikariCP", "5.0.1")
 
     // Serialization
