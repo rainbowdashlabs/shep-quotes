@@ -14,19 +14,10 @@ repositories {
 }
 
 dependencies {
-    // discord
-    implementation("net.dv8tion", "JDA", "5.0.0-alpha.9") {
-        exclude(module = "opus-java")
-    }
-
-    implementation("de.chojo", "cjda-util", "2.0.3-alpha.9")
+    implementation("de.chojo", "cjda-util", "2.3.4+alpha.11")
 
     // database
     implementation("org.postgresql", "postgresql", "42.3.4")
-    implementation("com.zaxxer", "HikariCP", "5.0.1")
-
-    // Serialization
-    implementation("com.fasterxml.jackson.core", "jackson-databind", "2.13.2.2")
 
     // Logging
     implementation("org.slf4j", "slf4j-api", "1.7.36")
@@ -52,7 +43,7 @@ java {
     withSourcesJar()
     withJavadocJar()
 
-    sourceCompatibility = JavaVersion.VERSION_15
+    sourceCompatibility = JavaVersion.VERSION_17
 }
 
 tasks {
