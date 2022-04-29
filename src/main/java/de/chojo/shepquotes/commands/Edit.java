@@ -1,5 +1,6 @@
 package de.chojo.shepquotes.commands;
 
+import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import net.dv8tion.jda.api.Permission;
@@ -9,8 +10,7 @@ import javax.sql.DataSource;
 
 public class Edit extends SimpleCommand {
     protected Edit(DataSource dataSource) {
-        super("edit", null, "Edit a existing quote", argsBuilder()
-                .build(), Permission.UNKNOWN);
+        super(CommandMeta.builder("edit", "Edit a existing quote"));
     }
 
     @Override

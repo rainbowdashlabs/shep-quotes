@@ -1,5 +1,6 @@
 package de.chojo.shepquotes.commands;
 
+import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import net.dv8tion.jda.api.Permission;
@@ -9,8 +10,8 @@ import javax.sql.DataSource;
 
 public class Import extends SimpleCommand {
     protected Import(DataSource dataSource) {
-        super("import", null, "Import quotes from another bot", argsBuilder()
-                .build(), Permission.UNKNOWN);
+        super(CommandMeta.builder("import", "Import quotes from another bot")
+                .build());
     }
 
     @Override

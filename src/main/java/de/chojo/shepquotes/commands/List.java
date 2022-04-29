@@ -1,5 +1,6 @@
 package de.chojo.shepquotes.commands;
 
+import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import net.dv8tion.jda.api.Permission;
@@ -9,8 +10,7 @@ import javax.sql.DataSource;
 
 public class List extends SimpleCommand {
     protected List(DataSource dataSource) {
-        super("list", null, "List all existing quotes.", argsBuilder()
-                .build(), Permission.UNKNOWN);
+        super(CommandMeta.builder("list", "List all existing quotes."));
     }
 
     @Override

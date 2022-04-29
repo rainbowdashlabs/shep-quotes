@@ -1,5 +1,7 @@
 package de.chojo.shepquotes.commands;
 
+import de.chojo.jdautil.command.CommandMeta;
+import de.chojo.jdautil.command.SimpleArgument;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import de.chojo.shepquotes.data.QuoteData;
@@ -13,13 +15,11 @@ public class Quote extends SimpleCommand {
     private final QuotePageService quotePages;
 
     protected Quote(QuoteData quoteData, QuotePageService quotePages) {
-        super("quote", null, "Search for quotes",
-                argsBuilder()
-                        .add(OptionType.INTEGER, "id", "Quote id", false)
-                        .add(OptionType.STRING, "source", "Search by source or author", false)
-                        .add(OptionType.STRING, "content", "Search by quote content", false)
-                        .build(),
-                Permission.UNKNOWN);
+        super(CommandMeta.builder("quote", "Search for quotes")
+                        .addArgument(SimpleArgument.integer("id", "Quote id"))
+                        .addArgument(SimpleArgument.string("source", "Search by source or author"))
+                        .addArgument(SimpleArgument.string("content", "Search by quote content"))
+                        .build());
         this.quoteData = quoteData;
         this.quotePages = quotePages;
     }
