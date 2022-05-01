@@ -165,7 +165,7 @@ public class QuoteData extends QueryFactoryHolder {
                                 FROM quote q
                                 LEFT JOIN content c ON q.id = c.quote_id
                                 LEFT JOIN source_ids a ON q.id = a.quote_id
-                                LEFT JOIN guild_quote_ids gqi ON q.guild_id = gqi.quote_id
+                                LEFT JOIN guild_quote_ids gqi ON q.id = gqi.quote_id
                                 WHERE q.id = ?
                                 """)
                         .paramsBuilder(stmt -> stmt.setInt(id))
