@@ -1,3 +1,10 @@
+-- Leave some space for the migrated ids
+
+ALTER SEQUENCE quote_id_seq INCREMENT BY 5000;
+SELECT nextval('quote_id_seq');
+ALTER SEQUENCE quote_id_seq INCREMENT BY 1;
+
+
 -- Extract distinct sources from quotes by guild id
 SELECT ROW_NUMBER() OVER (), name, guild_id
 FROM (SELECT guild_id, INITCAP(name) AS name

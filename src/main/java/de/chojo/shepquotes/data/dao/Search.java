@@ -5,7 +5,6 @@ import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.entities.Guild;
 import org.slf4j.Logger;
 
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -18,8 +17,8 @@ public class Search extends QueryFactoryHolder {
     private final long guild;
     private final Quotes quotes;
 
-    public Search(Guild guild, Quotes quotes, DataSource dataSource) {
-        super(dataSource, QueryBuilderConfig.builder()
+    public Search(Guild guild, Quotes quotes) {
+        super(quotes.source(), QueryBuilderConfig.builder()
                 .withExceptionHandler(err -> log.error("Unhandled exception", err))
                 .build());
         this.guild = guild.getIdLong();
@@ -37,28 +36,28 @@ public class Search extends QueryFactoryHolder {
                 .paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", content)))
                 .readRow(r -> r.getInt("quote_id"))
                 .all()
-                .thenApply(quotes::getQuotesByIds);
+                .thenApply(quotes::getById);
     }
 
     public CompletableFuture<List<Quote>> source(String name) {
         return builder(Integer.class)
                 .query("""
-                        WITH sourcesnapshots AS(
+                        WITH sources AS(
                              SELECT DISTINCT a.id
                              FROM source a
                              WHERE a.guild_id = ? AND a.name ILIKE ?
                              )
-                        SELECT DISTINCT l.quote_id
+                        SELECT DISTINCT l.quote_id as id
                         FROM source_links l
-                        WHERE l.quote_id IN (SELECT a.id FROM sourcesnapshots a)
+                        WHERE l.source_id = ANY (SELECT a.id FROM sources a)
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(guild).setString(name))
+                .paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", name)))
                 .readRow(r -> r.getInt("id"))
                 .all()
-                .thenApply(quotes::getQuotesByIds);
+                .thenApply(quotes::getById);
     }
 
     public CompletableFuture<Optional<Quote>> id(int id) {
-        return quotes.byId(id);
+        return quotes.byLocalId(id);
     }
 }

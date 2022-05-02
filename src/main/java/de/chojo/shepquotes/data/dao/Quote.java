@@ -20,15 +20,17 @@ public class Quote extends QueryFactoryHolder {
     private static final Logger log = getLogger(Quote.class);
     private Sources sources;
     private Links links;
-    private int id;
+    private final int id;
+    private final int localId;
 
-    public Quote(Sources sources, Links links, int id) {
+    public Quote(Quotes quotes, Sources sources, Links links, int id, int localId) {
         super(links.source(), QueryBuilderConfig.builder()
                 .withExceptionHandler(err -> log.error("Unhandled exception", err))
                 .build());
         this.sources = sources;
         this.links = links;
         this.id = id;
+        this.localId = localId;
     }
 
     public CompletableFuture<Integer> content(String content) {
@@ -39,6 +41,11 @@ public class Quote extends QueryFactoryHolder {
                                 SET content = excluded.content
                         """)
                 .paramsBuilder(stmt -> stmt.setInt(id).setString(content))
+                .append()
+                .query("""
+                        UPDATE quote SET modified = (NOW() AT TIME ZONE 'utc') WHERE id = ?
+                        """)
+                .paramsBuilder(stmt -> stmt.setInt(id))
                 .insert()
                 .execute();
     }
@@ -48,18 +55,17 @@ public class Quote extends QueryFactoryHolder {
     }
 
     public void delete() {
+        builder().query("""
+                DELETE FROM quote WHERE id = ?
+                """)
+                .paramsBuilder(stmt -> stmt.setInt(id))
+                .delete()
+                .execute();
 
     }
 
     public CompletableFuture<List<Source>> sources() {
-        return builder(Source.class).query("""
-                        SELECT s.id FROM source_links l
-                        LEFT JOIN source s ON s.id = l.author_id
-                        WHERE l.quote_id = ?
-                        """)
-                .paramsBuilder(stmt -> stmt.setInt(id))
-                .readRow(r -> new Source(links, r.getInt(1)))
-                .all();
+        return sources.ofQuote(this);
     }
 
     public int id() {
@@ -69,17 +75,18 @@ public class Quote extends QueryFactoryHolder {
     public CompletableFuture<Optional<QuoteSnapshot>> snapshot() {
         return builder(QuoteSnapshot.class)
                 .query("""
-                        SELECT q.id, gqi.guild_quote_id, q.guild_id, c.content, q.owner, q.created, q.modified, a.ids
+                        SELECT q.id, gqi.local_id, q.guild_id, c.content, q.owner, q.created, q.modified, a.ids
                         FROM quote q
                         LEFT JOIN content c ON q.id = c.quote_id
                         LEFT JOIN source_ids a ON q.id = a.quote_id
-                        LEFT JOIN guild_quote_ids gqi ON q.id = gqi.quote_id
+                        LEFT JOIN local_ids gqi ON q.id = gqi.quote_id
                         WHERE q.id = ?
                         """)
                 .paramsBuilder(stmt -> stmt.setInt(id))
                 .readRow(r -> {
                     List<Integer> authorIds = ArrayConverter.toList(r, "ids");
-                    return new QuoteSnapshot(r.getInt("id"), r.getInt("guild_quote_id"),
+                    return new QuoteSnapshot(r.getInt("id"),
+                            r.getInt("local_id"),
                             r.getLong("guild_id"),
                             r.getLong("owner"),
                             r.getString("content"),
@@ -88,7 +95,6 @@ public class Quote extends QueryFactoryHolder {
                             r.getTimestamp("modified").toLocalDateTime());
                 })
                 .first();
-
     }
 
     public MessageEmbed embed(ContextLocalizer localizer) {
@@ -96,11 +102,19 @@ public class Quote extends QueryFactoryHolder {
         var snapshot = snapshot().join().get();
 
         return new LocalizedEmbedBuilder(localizer)
-                .setTitle(String.format("#%s", snapshot.guildQuoteId()))
+                .setTitle(String.format("#%s", snapshot.localId()))
                 .setDescription(snapshot.content())
                 .setTimestamp(snapshot.created())
                 .addField("", sources, false)
                 .setFooter(String.format("%s - %s", "unkown", snapshot.ownerId()))
                 .build();
+    }
+
+    public CompletableFuture<Boolean> clearSources() {
+        return links.clear(this);
+    }
+
+    public int localId() {
+        return localId;
     }
 }

@@ -1,19 +1,14 @@
-CREATE SEQUENCE shep_quotes.authors_id_seq
-    AS INTEGER;
-
 CREATE TABLE IF NOT EXISTS shep_quotes.source
 (
-    id       INTEGER DEFAULT NEXTVAL('shep_quotes.authors_id_seq'::regclass) NOT NULL,
-    name     TEXT                                                            NOT NULL,
-    guild_id BIGINT                                                          NOT NULL,
+    id       SERIAL NOT NULL,
+    name     TEXT   NOT NULL,
+    guild_id BIGINT NOT NULL,
     CONSTRAINT source_pk
         UNIQUE (id)
 );
 
-ALTER SEQUENCE shep_quotes.authors_id_seq OWNED BY shep_quotes.source.id;
-
 CREATE INDEX IF NOT EXISTS source_guild_id_index
-    ON shep_quotes.source (guild_id COLLATE ??? ???);
+    ON shep_quotes.source (guild_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "source_guild_id_lower(name)_uindex"
     ON shep_quotes.source (guild_id, LOWER(name));
@@ -72,7 +67,7 @@ CREATE TABLE IF NOT EXISTS shep_quotes.quotes_old
 
 CREATE OR REPLACE VIEW shep_quotes.source_ids(quote_id, ids) AS
 SELECT source_links.quote_id,
-       ARRAY_AGG(source_links.author_id) AS ids
+       ARRAY_AGG(source_links.source_id) AS ids
 FROM shep_quotes.source_links
 GROUP BY source_links.quote_id;
 

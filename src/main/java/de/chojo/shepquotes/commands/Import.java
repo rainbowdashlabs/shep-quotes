@@ -16,7 +16,6 @@ public class Import extends SimpleCommand {
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
-        // TODO: Implement modal when implemented
-        // https://github.com/DV8FromTheWorld/JDA/pull/2024
+        // TODO: Implement when required
     }
 }

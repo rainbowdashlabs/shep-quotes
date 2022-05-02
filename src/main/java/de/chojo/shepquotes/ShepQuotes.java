@@ -4,7 +4,10 @@ import de.chojo.jdautil.command.dispatching.CommandHub;
 import de.chojo.jdautil.localization.ILocalizer;
 import de.chojo.jdautil.util.Consumers;
 import de.chojo.shepquotes.commands.Add;
+import de.chojo.shepquotes.commands.Edit;
 import de.chojo.shepquotes.commands.Quote;
+import de.chojo.shepquotes.commands.Remove;
+import de.chojo.shepquotes.commands.Source;
 import de.chojo.shepquotes.config.Configuration;
 import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.util.LogNotify;
@@ -51,7 +54,13 @@ public class ShepQuotes {
     private void initCommands() {
         CommandHub.builder(shardManager)
                 .useGuildCommands()
-                .withCommands(new Add(quoteData), new Quote(quoteData))
+                .withCommands(
+                        new Add(quoteData),
+                        new Remove(quoteData),
+                        new Quote(quoteData),
+                        new Edit(quoteData),
+                        new Source(quoteData)
+                )
                 .withPermissionCheck((event, simpleCommand) -> true)
                 .withModalService(Consumers.empty())
                 .withButtonService(Consumers.empty())

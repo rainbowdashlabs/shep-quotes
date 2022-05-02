@@ -27,10 +27,10 @@ public class Add extends SimpleCommand {
         context.registerModal(ModalHandler.builder("Add Quote")
                 .addInput(TextInputHandler.builder("content", "Text", TextInputStyle.PARAGRAPH)
                         .withPlaceholder("The quote text"))
-                .addInput(TextInputHandler.builder("author", "Author", TextInputStyle.PARAGRAPH)
-                        .withPlaceholder("Add authors which were involved in this quote. One author per line"))
+                .addInput(TextInputHandler.builder("source", "Sources", TextInputStyle.PARAGRAPH)
+                        .withPlaceholder("Add sources which were involved in this quote. One source per line"))
                 .withHandler(modal -> {
-                    var authors = modal.getValue("author").getAsString().split("\n");
+                    var authors = modal.getValue("source").getAsString().split("\n");
                     var content = modal.getValue("content").getAsString();
 
                     var quotes = quoteData.quotes(event.getGuild());
@@ -41,6 +41,8 @@ public class Add extends SimpleCommand {
                         quotes.sources().getOrCreate(author).join().link(quote);
                     }
                     modal.replyEmbeds(quote.embed(context.localizer())).queue();
+
+                    //TODO: Add hook to post to channel
                 })
                 .build());
     }
