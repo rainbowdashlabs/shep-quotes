@@ -1,7 +1,12 @@
 package de.chojo.shepquotes;
 
 import de.chojo.jdautil.command.dispatching.CommandHub;
+import de.chojo.jdautil.localization.ILocalizer;
+import de.chojo.jdautil.util.Consumers;
+import de.chojo.shepquotes.commands.Add;
+import de.chojo.shepquotes.commands.Quote;
 import de.chojo.shepquotes.config.Configuration;
+import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.util.LogNotify;
 import de.chojo.sqlutil.datasource.DataSourceCreator;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -21,6 +26,7 @@ public class ShepQuotes {
     private Configuration configuration;
     private DataSource dataSource;
     private ShardManager shardManager;
+    private QuoteData quoteData;
 
     public static void main(String[] args) {
         instance = new ShepQuotes();
@@ -45,8 +51,12 @@ public class ShepQuotes {
     private void initCommands() {
         CommandHub.builder(shardManager)
                 .useGuildCommands()
-                .withCommands()
+                .withCommands(new Add(quoteData), new Quote(quoteData))
                 .withPermissionCheck((event, simpleCommand) -> true)
+                .withModalService(Consumers.empty())
+                .withButtonService(Consumers.empty())
+                .withPagination(Consumers.empty())
+                .withLocalizer(ILocalizer.DEFAULT)
                 .build();
     }
 
@@ -62,10 +72,12 @@ public class ShepQuotes {
                 .forSchema(db.schema())
                 .withMaximumPoolSize(5)
                 .build();
+
+        this.quoteData = new QuoteData(dataSource);
     }
 
     private void initShardManager() throws LoginException {
-        DefaultShardManagerBuilder
+        shardManager = DefaultShardManagerBuilder
                 .create(configuration.baseSettings().token(), GatewayIntent.GUILD_MESSAGES)
                 .build();
     }
