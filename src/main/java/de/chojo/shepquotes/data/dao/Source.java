@@ -34,7 +34,7 @@ public class Source extends QueryFactoryHolder {
      * @param old source to merge into this source
      */
     public void merge(Source old) {
-        if(old.equals(this)) return;
+        if (old.equals(this)) return;
 
         builder().query("""
                         WITH assigned AS (
@@ -65,17 +65,25 @@ public class Source extends QueryFactoryHolder {
     }
 
     public void rename(String name) {
+        if (this.name.equals(name)) return;
+        if (this.name.equalsIgnoreCase(name)) {
+            setName(name);
+            return;
+        }
+
+        sources.get(name).ifPresentOrElse(
+                source -> source.merge(this),
+                () -> setName(name));
+    }
+
+    private void setName(String name) {
         this.name = name;
-        sources.get(name).thenAccept(optSource -> {
-            optSource.ifPresentOrElse(
-                    source -> source.merge(this),
-                    () -> builder().query("""
-                                    UPDATE source SET name = ? WHERE id = ?;
-                                    """)
-                            .paramsBuilder(stmt -> stmt.setString(name).setInt(id))
-                            .update()
-                            .execute());
-        });
+        builder().query("""
+                        UPDATE source SET name = ? WHERE id = ?;
+                        """)
+                .paramsBuilder(stmt -> stmt.setString(name).setInt(id))
+                .update()
+                .execute();
     }
 
     public void delete() {
@@ -110,5 +118,10 @@ public class Source extends QueryFactoryHolder {
         int result = id;
         result = 31 * result + name.hashCode();
         return result;
+    }
+
+    Source update(String name) {
+        this.name = name;
+        return this;
     }
 }

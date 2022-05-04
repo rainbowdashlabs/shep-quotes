@@ -6,8 +6,6 @@ import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.pagination.bag.PrivateListPageBag;
 import de.chojo.jdautil.pagination.bag.PrivatePageBag;
 import de.chojo.jdautil.util.Choice;
-import de.chojo.jdautil.util.Consumers;
-import de.chojo.jdautil.util.Futures;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import de.chojo.shepquotes.data.QuoteData;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -41,7 +39,7 @@ public class Quote extends SimpleCommand {
         var search = quotes.search();
         var localizer = context.localizer();
 
-        CompletableFuture<List<de.chojo.shepquotes.data.dao.Quote>> source = null;
+        List<de.chojo.shepquotes.data.dao.Quote> source = null;
         if (event.getOption("source") != null) {
             source = search.source(event.getOption("source").getAsString());
         }
@@ -51,65 +49,49 @@ public class Quote extends SimpleCommand {
         }
 
         if (source != null) {
-            source.whenComplete(Futures.whenComplete(matches -> {
-                context.registerPage(new PrivateListPageBag<>(matches, event.getUser().getIdLong()) {
-                    @Override
-                    public CompletableFuture<MessageEmbed> buildPage() {
-                        return CompletableFuture.supplyAsync(() -> currentElement().embed(localizer));
-                    }
+            context.registerPage(new PrivateListPageBag<>(source, event.getUser().getIdLong()) {
+                @Override
+                public CompletableFuture<MessageEmbed> buildPage() {
+                    return CompletableFuture.supplyAsync(() -> currentElement().snapshot().embed());
+                }
 
-                    @Override
-                    public CompletableFuture<MessageEmbed> buildEmptyPage() {
-                        return CompletableFuture.completedFuture(new EmbedBuilder().setTitle("Empty").build());
-                    }
-                });
-            }, err -> {
-
-            }));
+                @Override
+                public CompletableFuture<MessageEmbed> buildEmptyPage() {
+                    return CompletableFuture.completedFuture(new EmbedBuilder().setTitle("Empty").build());
+                }
+            });
             return;
         }
 
 
-        CompletableFuture<Optional<de.chojo.shepquotes.data.dao.Quote>> start = null;
+        Optional<de.chojo.shepquotes.data.dao.Quote> quote = null;
         if (event.getOption("id") != null) {
-            start = search.id(event.getOption("id").getAsInt());
+            quote = search.id(event.getOption("id").getAsInt());
         }
 
-        if (start == null) {
-            start = quotes.random();
+        if (quote == null) {
+            quote = quotes.random();
         }
 
-        start.whenComplete(Futures.whenComplete(quote -> {
-                    if (quote.isEmpty()) {
-                        event.reply("No quote found.").queue();
-                        return;
-                    }
-                    context.registerPage(new QuoteScroll(quotes.quoteCount().join(), event.getUser().getIdLong(), quote.get().localId()) {
-
-                        @Override
-                        public CompletableFuture<MessageEmbed> buildPage() {
-                            return CompletableFuture.supplyAsync(() -> quotes.byLocalId(current() + 1).join().get().embed(localizer)).exceptionally(err -> {
-                                log.error("Error", err);
-                                return null;
-                            });
-                        }
-
-                        @Override
-                        public CompletableFuture<MessageEmbed> buildEmptyPage() {
-                            return CompletableFuture.completedFuture(new EmbedBuilder().setTitle("Empty").build());
-                        }
-                    });
-                }, err -> {
-                    log.error("Could not send quote page", err);
-                }))
-                .whenComplete(Futures.whenComplete(Consumers.empty(), err -> log.error("Opps", err)));
-    }
-
-    private abstract static class QuoteScroll extends PrivatePageBag {
-        private QuoteScroll(int pages, long ownerId, int start) {
-            super(pages, ownerId);
-            current(start - 1);
+        if (quote.isEmpty()) {
+            event.reply("No quote found.").queue();
+            return;
         }
+
+        context.registerPage(new QuoteScroll(quotes.quoteCount(), event.getUser().getIdLong(), quote.get().localId()) {
+            @Override
+            public CompletableFuture<MessageEmbed> buildPage() {
+                return CompletableFuture.supplyAsync(() -> quotes.byLocalId(current() + 1).get().snapshot().embed()).exceptionally(err -> {
+                    log.error("Error", err);
+                    return null;
+                });
+            }
+
+            @Override
+            public CompletableFuture<MessageEmbed> buildEmptyPage() {
+                return CompletableFuture.completedFuture(new EmbedBuilder().setTitle("Empty").build());
+            }
+        });
     }
 
     @Override
@@ -121,15 +103,15 @@ public class Quote extends SimpleCommand {
 
     private void suggest(CommandAutoCompleteInteractionEvent event) {
         var option = event.getFocusedOption();
-        var sources = quoteData.sources(event.getGuild());
-        sources.suggest(option.getValue())
-                .whenComplete(Futures.whenComplete(results -> {
-                    event.replyChoices(Choice.toStringChoice(results)).queue();
-                }, err -> {
-                    log.error("Could not compute choices", err);
-                    event.replyChoices().queue();
-                }));
-
+        var sources = quoteData.quotes(event.getGuild()).sources();
+        var suggest = sources.suggest(option.getValue());
+        event.replyChoices(Choice.toStringChoice(suggest)).queue();
     }
 
+    private abstract static class QuoteScroll extends PrivatePageBag {
+        private QuoteScroll(int pages, long ownerId, int start) {
+            super(pages, ownerId);
+            current(start - 1);
+        }
+    }
 }

@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -25,7 +24,7 @@ public class Search extends QueryFactoryHolder {
         this.quotes = quotes;
     }
 
-    public CompletableFuture<List<Quote>> content(String content) {
+    public List<Quote> content(String content) {
         return builder(Integer.class)
                 .query("""
                         SELECT quote_id
@@ -35,11 +34,15 @@ public class Search extends QueryFactoryHolder {
                         """)
                 .paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", content)))
                 .readRow(r -> r.getInt("quote_id"))
-                .all()
-                .thenApply(quotes::getById);
+                .allSync()
+                .stream()
+                .map(quotes::getById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 
-    public CompletableFuture<List<Quote>> source(String name) {
+    public List<Quote> source(String name) {
         return builder(Integer.class)
                 .query("""
                         WITH sources AS(
@@ -53,11 +56,32 @@ public class Search extends QueryFactoryHolder {
                         """)
                 .paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", name)))
                 .readRow(r -> r.getInt("id"))
-                .all()
-                .thenApply(quotes::getById);
+                .allSync()
+                .stream()
+                .map(quotes::getById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 
-    public CompletableFuture<Optional<Quote>> id(int id) {
+    public List<Quote> source(Source source) {
+        return builder(Integer.class)
+                .query("""
+                        SELECT DISTINCT l.quote_id as id
+                        FROM source_links l
+                        WHERE l.source_id = ?
+                        """)
+                .paramsBuilder(stmt -> stmt.setInt(source.id()))
+                .readRow(r -> r.getInt("id"))
+                .allSync()
+                .stream()
+                .map(quotes::getById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+    }
+
+    public Optional<Quote> id(int id) {
         return quotes.byLocalId(id);
     }
 }

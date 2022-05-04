@@ -5,7 +5,6 @@ import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
-import java.util.concurrent.CompletableFuture;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -29,14 +28,13 @@ public class Links extends QueryFactoryHolder {
                 .execute();
     }
 
-    public CompletableFuture<Boolean> clear(Quote quote) {
-        return builder().query("""
+    public void clear(Quote quote) {
+        builder().query("""
                         DELETE FROM source_links WHERE quote_id = ?;
                         """)
                 .paramsBuilder(stmt -> stmt.setInt(quote.id()))
                 .delete()
-                .execute()
-                .thenApply(r -> r > 0);
+                .executeSync();
     }
 
     public void clear(Source quote) {

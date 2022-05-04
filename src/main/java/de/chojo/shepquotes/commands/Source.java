@@ -4,13 +4,17 @@ import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleArgument;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.util.Choice;
-import de.chojo.jdautil.util.Futures;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import de.chojo.shepquotes.data.QuoteData;
+import de.chojo.shepquotes.data.dao.Post;
+import de.chojo.shepquotes.data.dao.Quote;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import org.slf4j.Logger;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -36,59 +40,41 @@ public class Source extends SimpleCommand {
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
         var cmd = event.getSubcommandName();
-        var sources = quoteData.sources(event.getGuild());
+        var quotes = quoteData.quotes(event.getGuild());
+        var sources = quotes.sources();
         if ("merge".equalsIgnoreCase(cmd)) {
             sources.get(event.getOption("merge", OptionMapping::getAsString))
-                    .whenComplete(Futures.whenComplete(source -> {
-                        if (source.isEmpty()) {
-                            event.reply("Unkown Source").queue();
-                            return;
-                        }
-                        var into = sources.get(event.getOption("into", OptionMapping::getAsString)).join();
-                        if (into.isEmpty()) {
-                            event.reply("Unkown target").queue();
-                            return;
-                        }
-
-                        into.get().merge(source.get());
-                        event.reply("Merged source " + source.get().name() + " into " + into.get().name()).queue();
-                    }, err -> log.error("Could not retrieve source", err)));
+                    .ifPresentOrElse(source -> sources.get(event.getOption("into", OptionMapping::getAsString))
+                            .ifPresentOrElse(into -> {
+                                Set<Quote> update = new HashSet<>(quotes.search().source(source));
+                                update.addAll(quotes.search().source(into));
+                                into.merge(source);
+                                event.reply("Merged source " + source.name() + " into " + into.name() + ". Updating " + update.size() + " quotes.").queue();
+                                update.forEach(quote -> quotes.quoteChannel().getPost(quote).ifPresent(Post::update));
+                            }, () -> event.reply("Unkown target").queue()), () -> event.reply("Unkown Source").queue());
             return;
         }
 
         if ("rename".equalsIgnoreCase(cmd)) {
             sources.get(event.getOption("source", OptionMapping::getAsString))
-                    .whenComplete(Futures.whenComplete(
-                            optSource -> {
-                                if (optSource.isEmpty()) {
-                                    event.reply("Unknown source").queue();
-                                    return;
-                                }
-                                var source = optSource.get();
-                                var oldName = source.name();
-                                source.rename(event.getOption("into", OptionMapping::getAsString));
-                                event.reply("Source " + oldName + " renamed to " + source.name()).queue();
-                            }, err -> {
-
-                            }
-                    ));
+                    .ifPresentOrElse(source -> {
+                        var oldName = source.name();
+                        source.rename(event.getOption("into", OptionMapping::getAsString));
+                        var updates = quotes.search().source(source);
+                        event.reply("Source " + oldName + " renamed to " + source.name() + ". Updating " + updates.size() + " quotes.").queue();
+                        updates.forEach(quote -> quotes.quoteChannel().getPost(quote).ifPresent(Post::update));
+                    }, () -> event.reply("Unknown source").queue());
             return;
         }
 
         if ("delete".equalsIgnoreCase(cmd)) {
             sources.get(event.getOption("name", OptionMapping::getAsString))
-                    .whenComplete(Futures.whenComplete(
-                            source -> {
-                                if (source.isEmpty()) {
-                                    event.reply("Unknown source").queue();
-                                    return;
-                                }
-                                source.get().delete();
-                                event.reply("Source `" + source.get().name() + "` deleted").queue();
-                            }, err -> {
-
-                            }
-                    ));
+                    .ifPresentOrElse(source -> {
+                        var update = quotes.search().source(source);
+                        source.delete();
+                        event.reply("Source `" + source.name() + "` deleted. Updating " + update.size() + " quotes.").queue();
+                        update.forEach(quote -> quotes.quoteChannel().getPost(quote).ifPresent(Post::update));
+                    }, () -> event.reply("Unknown source").queue());
         }
     }
 
@@ -99,14 +85,8 @@ public class Source extends SimpleCommand {
 
     private void suggest(CommandAutoCompleteInteractionEvent event) {
         var option = event.getFocusedOption();
-        var sources = quoteData.sources(event.getGuild());
-        sources.suggest(option.getValue())
-                .whenComplete(Futures.whenComplete(results -> {
-                    event.replyChoices(Choice.toStringChoice(results)).queue();
-                }, err -> {
-                    log.error("Could not compute choices", err);
-                    event.replyChoices().queue();
-                }));
-
+        var sources = quoteData.quotes(event.getGuild()).sources();
+        var suggest = sources.suggest(option.getValue());
+        event.replyChoices(Choice.toStringChoice(suggest)).queue();
     }
 }

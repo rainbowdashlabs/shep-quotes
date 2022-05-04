@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +31,7 @@ public class Sources extends QueryFactoryHolder {
         this.links = links;
     }
 
-    public CompletableFuture<List<Source>> ofQuote(Quote quote) {
+    public List<Source> ofQuote(Quote quote) {
         return builder(Source.class).query("""
                         SELECT s.id, s.name FROM source_links l
                         LEFT JOIN source s ON s.id = l.source_id
@@ -40,31 +39,32 @@ public class Sources extends QueryFactoryHolder {
                         """)
                 .paramsBuilder(stmt -> stmt.setInt(quote.id()))
                 .readRow(r -> new Source(this, links, r.getInt(1), r.getString("name")))
-                .all();
+                .allSync();
     }
 
-    public CompletableFuture<Source> getOrCreate(String name) {
-        return get(name).thenApply(source -> source.orElseGet(() -> create(name).get()));
+    public Source getOrCreate(String name) {
+        return get(name).orElseGet(() -> create(name));
     }
 
-    public CompletableFuture<Optional<Source>> get(String name) {
+    public Optional<Source> get(String name) {
         return builder(Source.class)
                 .query("""
                         SELECT id, name FROM source WHERE name ILIKE ? AND guild_id = ?
                         """)
                 .paramsBuilder(stmt -> stmt.setString(name).setLong(guild))
                 .readRow(this::buildSource)
-                .first();
+                .firstSync();
     }
 
-    public Optional<Source> create(String name) {
+    public Source create(String name) {
         return builder(Source.class)
                 .query("""
                         INSERT INTO source(name, guild_id) VALUES(?, ?) RETURNING id, name
                         """)
                 .paramsBuilder(stmt -> stmt.setString(name).setLong(guild))
                 .readRow(this::buildSource)
-                .firstSync();
+                .firstSync()
+                .get();
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent") // Used only internally
@@ -75,7 +75,7 @@ public class Sources extends QueryFactoryHolder {
                             SELECT id, name FROM source WHERE id = ?
                             """)
                     .paramsBuilder(stmt -> stmt.setInt(id))
-                    .readRow(this::buildSource)
+                    .readRow(r -> new Source(this, links, r.getInt("id"), r.getString("name")))
                     .firstSync().get());
         } catch (ExecutionException e) {
             return null;
@@ -87,25 +87,33 @@ public class Sources extends QueryFactoryHolder {
     }
 
     private Source ofIdAndName(int id, String name) {
-        return new Source(this, links, id, name);
+        return syncCache(id, name);
+    }
+
+    private Source syncCache(int id, String name) {
+        try {
+            return sourceCache.get(id, () -> new Source(this, links, id, name)).update(name);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void invalidate(Source source) {
         sourceCache.invalidate(source.id());
     }
 
-    public CompletableFuture<List<String>> suggest(String value) {
+    public List<String> suggest(String value) {
         if (value.isBlank()) {
             return builder(String.class).query("""
                             SELECT name FROM source WHERE guild_id = ? LIMIT 15
                             """).paramsBuilder(stmt -> stmt.setLong(guild))
                     .readRow(r -> r.getString("name"))
-                    .all();
+                    .allSync();
         }
         return builder(String.class).query("""
-                    SELECT name FROM source WHERE guild_id = ? AND name ILIKE ? LIMIT 15;
-                """).paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", value)))
+                            SELECT name FROM source WHERE guild_id = ? AND name ILIKE ? LIMIT 15;
+                        """).paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", value)))
                 .readRow(r -> r.getString("name"))
-                .all();
+                .allSync();
     }
 }

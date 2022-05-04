@@ -1,7 +1,5 @@
 package de.chojo.shepquotes.data.dao;
 
-import de.chojo.jdautil.localization.ContextLocalizer;
-import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.shepquotes.data.elements.QuoteSnapshot;
 import de.chojo.sqlutil.base.QueryFactoryHolder;
 import de.chojo.sqlutil.conversion.ArrayConverter;
@@ -10,7 +8,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import org.slf4j.Logger;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -18,6 +15,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class Quote extends QueryFactoryHolder {
     private static final Logger log = getLogger(Quote.class);
+    private Quotes quotes;
     private Sources sources;
     private Links links;
     private final int id;
@@ -27,6 +25,7 @@ public class Quote extends QueryFactoryHolder {
         super(links.source(), QueryBuilderConfig.builder()
                 .withExceptionHandler(err -> log.error("Unhandled exception", err))
                 .build());
+        this.quotes = quotes;
         this.sources = sources;
         this.links = links;
         this.id = id;
@@ -60,11 +59,11 @@ public class Quote extends QueryFactoryHolder {
                 """)
                 .paramsBuilder(stmt -> stmt.setInt(id))
                 .delete()
-                .execute();
-
+                .executeSync();
+        quotes.invalidate(this);
     }
 
-    public CompletableFuture<List<Source>> sources() {
+    public List<Source> sources() {
         return sources.ofQuote(this);
     }
 
@@ -72,7 +71,8 @@ public class Quote extends QueryFactoryHolder {
         return id;
     }
 
-    public CompletableFuture<Optional<QuoteSnapshot>> snapshot() {
+    public QuoteSnapshot snapshot() {
+        //TODO implement caching
         return builder(QuoteSnapshot.class)
                 .query("""
                         SELECT q.id, gqi.local_id, q.guild_id, c.content, q.owner, q.created, q.modified, a.ids
@@ -94,27 +94,30 @@ public class Quote extends QueryFactoryHolder {
                             r.getTimestamp("created").toLocalDateTime(),
                             r.getTimestamp("modified").toLocalDateTime());
                 })
-                .first();
+                .firstSync()
+                .get();
     }
 
-    public MessageEmbed embed(ContextLocalizer localizer) {
-        var sources = sources().join().stream().map(Source::name).collect(Collectors.joining(", "));
-        var snapshot = snapshot().join().get();
-
-        return new LocalizedEmbedBuilder(localizer)
-                .setTitle(String.format("#%s", snapshot.localId()))
-                .setDescription(snapshot.content())
-                .setTimestamp(snapshot.created())
-                .addField("", sources, false)
-                .setFooter(String.format("%s - %s", "unkown", snapshot.ownerId()))
-                .build();
-    }
-
-    public CompletableFuture<Boolean> clearSources() {
-        return links.clear(this);
+    public void clearSources() {
+        links.clear(this);
     }
 
     public int localId() {
         return localId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Quote)) return false;
+
+        Quote quote = (Quote) o;
+
+        return id == quote.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 }

@@ -5,6 +5,7 @@ import de.chojo.jdautil.localization.ILocalizer;
 import de.chojo.jdautil.util.Consumers;
 import de.chojo.shepquotes.commands.Add;
 import de.chojo.shepquotes.commands.Edit;
+import de.chojo.shepquotes.commands.Manage;
 import de.chojo.shepquotes.commands.Quote;
 import de.chojo.shepquotes.commands.Remove;
 import de.chojo.shepquotes.commands.Source;
@@ -20,6 +21,8 @@ import org.slf4j.Logger;
 
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
+
+import java.util.concurrent.Executors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -56,9 +59,10 @@ public class ShepQuotes {
                 .useGuildCommands()
                 .withCommands(
                         new Add(quoteData),
-                        new Remove(quoteData),
-                        new Quote(quoteData),
                         new Edit(quoteData),
+                        new Manage(quoteData),
+                        new Quote(quoteData),
+                        new Remove(quoteData),
                         new Source(quoteData)
                 )
                 .withPermissionCheck((event, simpleCommand) -> true)
@@ -88,6 +92,7 @@ public class ShepQuotes {
     private void initShardManager() throws LoginException {
         shardManager = DefaultShardManagerBuilder
                 .create(configuration.baseSettings().token(), GatewayIntent.GUILD_MESSAGES)
+                .setEventPool(Executors.newCachedThreadPool())
                 .build();
     }
 

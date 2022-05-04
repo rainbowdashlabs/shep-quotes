@@ -35,14 +35,13 @@ public class Add extends SimpleCommand {
 
                     var quotes = quoteData.quotes(event.getGuild());
 
-                    var quote = quotes.create(event.getUser()).join().get();
+                    var quote = quotes.create(event.getUser()).get();
                     quote.content(content).join();
                     for (var author : authors) {
-                        quotes.sources().getOrCreate(author).join().link(quote);
+                        quotes.sources().getOrCreate(author).link(quote);
                     }
-                    modal.replyEmbeds(quote.embed(context.localizer())).queue();
-
-                    //TODO: Add hook to post to channel
+                    modal.replyEmbeds(quote.snapshot().embed()).queue();
+                    quotes.quoteChannel().createPost(quote);
                 })
                 .build());
     }
