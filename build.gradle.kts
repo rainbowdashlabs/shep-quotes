@@ -17,7 +17,7 @@ dependencies {
     implementation("de.chojo", "cjda-util", "2.3.4+alpha.11")
 
     // database
-    implementation("org.postgresql", "postgresql", "42.3.4")
+    implementation("org.postgresql", "postgresql", "42.3.5")
 
     // Logging
     implementation("org.slf4j", "slf4j-api", "1.7.36")
