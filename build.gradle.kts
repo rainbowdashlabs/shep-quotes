@@ -27,7 +27,7 @@ dependencies {
 
     // utils
     implementation("org.apache.commons", "commons-lang3", "3.12.0")
-    implementation("de.chojo", "sql-util", "1.4.0")
+    implementation("de.chojo", "sql-util", "1.4.2")
     implementation("com.google.guava", "guava", "31.1-jre")
 
     // unit testing
