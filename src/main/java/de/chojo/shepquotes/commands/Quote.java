@@ -3,12 +3,12 @@ package de.chojo.shepquotes.commands;
 import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleArgument;
 import de.chojo.jdautil.command.SimpleCommand;
+import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.pagination.bag.PrivateListPageBag;
 import de.chojo.jdautil.pagination.bag.PrivatePageBag;
 import de.chojo.jdautil.util.Choice;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import de.chojo.shepquotes.data.QuoteData;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -25,10 +25,10 @@ public class Quote extends SimpleCommand {
     private static final Logger log = getLogger(Quote.class);
 
     public Quote(QuoteData quoteData) {
-        super(CommandMeta.builder("quote", "Search for quotes")
-                .addArgument(SimpleArgument.integer("id", "Quote id"))
-                .addArgument(SimpleArgument.string("source", "Search by source"))
-                .addArgument(SimpleArgument.string("content", "Search by quote content"))
+        super(CommandMeta.builder("quote", "command.quote.descr")
+                .addArgument(SimpleArgument.integer("id", "command.quote.arg.id"))
+                .addArgument(SimpleArgument.string("source", "command.quote.arg.source"))
+                .addArgument(SimpleArgument.string("content", "command.quote.arg.content"))
                 .build());
         this.quoteData = quoteData;
     }
@@ -57,7 +57,7 @@ public class Quote extends SimpleCommand {
 
                 @Override
                 public CompletableFuture<MessageEmbed> buildEmptyPage() {
-                    return CompletableFuture.completedFuture(new EmbedBuilder().setTitle("Empty").build());
+                    return CompletableFuture.completedFuture(new LocalizedEmbedBuilder(context.localizer()).setTitle("error.noQuote").build());
                 }
             });
             return;
@@ -74,7 +74,7 @@ public class Quote extends SimpleCommand {
         }
 
         if (quote.isEmpty()) {
-            event.reply("No quote found.").queue();
+            event.reply("error.notFound.").queue();
             return;
         }
 
@@ -89,7 +89,7 @@ public class Quote extends SimpleCommand {
 
             @Override
             public CompletableFuture<MessageEmbed> buildEmptyPage() {
-                return CompletableFuture.completedFuture(new EmbedBuilder().setTitle("Empty").build());
+                return CompletableFuture.completedFuture(new LocalizedEmbedBuilder(context.localizer()).setTitle("error.noQuote").build());
             }
         });
     }

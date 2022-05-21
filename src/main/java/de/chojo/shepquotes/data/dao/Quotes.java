@@ -4,7 +4,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.chojo.shepquotes.data.elements.QuoteSnapshot;
 import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -55,9 +53,7 @@ public class Quotes extends QueryFactoryHolder {
     }
 
     public Quotes(Guild guild, Sources sources, Links links) {
-        super(sources.source(), QueryBuilderConfig.builder()
-                .withExceptionHandler(err -> log.error("Unhandled exception", err))
-                .build());
+        super(sources);
         this.guild = guild;
         this.search = new Search(guild, this);
         this.links = links;
@@ -141,7 +137,7 @@ public class Quotes extends QueryFactoryHolder {
     Optional<Quote> getByLocalId(int id) {
         return builder(Quote.class).
                 query("""
-                        SELECT id, local_id
+                        SELECT id, local_id, owner
                         FROM quote q
                         LEFT JOIN local_ids gqi ON q.id = gqi.quote_id
                         WHERE guild_id = ? AND local_id = ?
@@ -154,7 +150,7 @@ public class Quotes extends QueryFactoryHolder {
     Optional<Quote> getById(int id) {
         return builder(Quote.class).
                 query("""
-                        SELECT id, local_id
+                        SELECT id, local_id,owner
                         FROM quote q
                         LEFT JOIN local_ids gqi ON q.id = gqi.quote_id
                         WHERE guild_id = ? AND id = ?
@@ -165,11 +161,11 @@ public class Quotes extends QueryFactoryHolder {
     }
 
     private Quote buildQuote(ResultSet r) throws SQLException {
-        return ofId(r.getInt("id"), r.getInt("local_id"));
+        return ofId(r.getInt("id"), r.getInt("local_id"), r.getLong("owner"));
     }
 
-    private Quote ofId(int id, int localId) {
-        return new Quote(this, sources, links, id, localId);
+    private Quote ofId(int id, int localId, long owner) {
+        return new Quote(this, sources, links, id, localId, owner);
     }
 
     public Integer quoteCount() {

@@ -4,7 +4,6 @@ import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.modals.handler.ModalHandler;
 import de.chojo.jdautil.modals.handler.TextInputHandler;
-import de.chojo.jdautil.util.Futures;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import de.chojo.shepquotes.data.QuoteData;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -15,20 +14,20 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class Add extends SimpleCommand {
     private static final Logger log = getLogger(Add.class);
-    QuoteData quoteData;
+    private final QuoteData quoteData;
 
     public Add(QuoteData quoteData) {
-        super(CommandMeta.builder("add", "Add a new quote"));
+        super(CommandMeta.builder("add", "command.add.descr"));
         this.quoteData = quoteData;
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
-        context.registerModal(ModalHandler.builder("Add Quote")
-                .addInput(TextInputHandler.builder("content", "Text", TextInputStyle.PARAGRAPH)
-                        .withPlaceholder("The quote text"))
-                .addInput(TextInputHandler.builder("source", "Sources", TextInputStyle.PARAGRAPH)
-                        .withPlaceholder("Add sources which were involved in this quote. One source per line"))
+        context.registerModal(ModalHandler.builder("command.add.modal.label")
+                .addInput(TextInputHandler.builder("content", "words.quote", TextInputStyle.PARAGRAPH)
+                        .withPlaceholder("command.add.modal.content.placeholder"))
+                .addInput(TextInputHandler.builder("source", "words.sources", TextInputStyle.PARAGRAPH)
+                        .withPlaceholder("command.add.modal.source.placeholder"))
                 .withHandler(modal -> {
                     var authors = modal.getValue("source").getAsString().split("\n");
                     var content = modal.getValue("content").getAsString();

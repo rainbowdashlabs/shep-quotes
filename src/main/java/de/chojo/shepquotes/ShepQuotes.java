@@ -2,6 +2,8 @@ package de.chojo.shepquotes;
 
 import de.chojo.jdautil.command.dispatching.CommandHub;
 import de.chojo.jdautil.localization.ILocalizer;
+import de.chojo.jdautil.localization.Localizer;
+import de.chojo.jdautil.localization.util.Language;
 import de.chojo.jdautil.util.Consumers;
 import de.chojo.shepquotes.commands.Add;
 import de.chojo.shepquotes.commands.Edit;
@@ -12,16 +14,17 @@ import de.chojo.shepquotes.commands.Source;
 import de.chojo.shepquotes.config.Configuration;
 import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.util.LogNotify;
+import de.chojo.sqlutil.databases.SqlType;
 import de.chojo.sqlutil.datasource.DataSourceCreator;
+import de.chojo.sqlutil.exceptions.ExceptionTransformer;
+import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import org.postgresql.ds.PGSimpleDataSource;
 import org.slf4j.Logger;
 
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
-
 import java.util.concurrent.Executors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -55,6 +58,10 @@ public class ShepQuotes {
     }
 
     private void initCommands() {
+        var localizer = Localizer.builder(Language.ENGLISH)
+                .addLanguage(Language.GERMAN)
+                .build();
+
         CommandHub.builder(shardManager)
                 .useGuildCommands()
                 .withCommands(
@@ -66,27 +73,33 @@ public class ShepQuotes {
                         new Source(quoteData)
                 )
                 .withPermissionCheck((event, simpleCommand) -> true)
-                .withModalService(Consumers.empty())
-                .withButtonService(Consumers.empty())
-                .withPagination(Consumers.empty())
-                .withLocalizer(ILocalizer.DEFAULT)
+                .withDefaultModalService()
+                .withDefaultMenuService()
+                .withDefaultPagination()
+                .withLocalizer(localizer)
                 .build();
     }
 
     private void initDb() {
+        var dbLogger = getLogger("DbLogger");
+        QueryBuilderConfig.setDefault(QueryBuilderConfig.builder()
+                .withExceptionHandler(err -> dbLogger.error("An error occured: {}", ExceptionTransformer.prettyException(err)))
+                .build());
+
         var db = configuration.database();
-        dataSource = DataSourceCreator.create(PGSimpleDataSource.class)
-                .withAddress(db.host())
-                .withPort(db.port())
-                .forDatabase(db.database())
-                .withUser(db.user())
-                .withPassword(db.password())
+        dataSource = DataSourceCreator.create(SqlType.POSTGRES)
+                .configure(builder -> builder
+                        .host(db.host())
+                        .port(db.port())
+                        .database(db.database())
+                        .user(db.user())
+                        .password(db.password()))
                 .create()
                 .forSchema(db.schema())
                 .withMaximumPoolSize(5)
                 .build();
 
-        this.quoteData = new QuoteData(dataSource);
+        quoteData = new QuoteData(dataSource);
     }
 
     private void initShardManager() throws LoginException {

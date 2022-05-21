@@ -4,7 +4,8 @@ import de.chojo.shepquotes.data.elements.QuoteSnapshot;
 import de.chojo.sqlutil.base.QueryFactoryHolder;
 import de.chojo.sqlutil.conversion.ArrayConverter;
 import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
-import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -20,8 +21,9 @@ public class Quote extends QueryFactoryHolder {
     private Links links;
     private final int id;
     private final int localId;
+    private long owner;
 
-    public Quote(Quotes quotes, Sources sources, Links links, int id, int localId) {
+    public Quote(Quotes quotes, Sources sources, Links links, int id, int localId, long owner) {
         super(links.source(), QueryBuilderConfig.builder()
                 .withExceptionHandler(err -> log.error("Unhandled exception", err))
                 .build());
@@ -30,6 +32,7 @@ public class Quote extends QueryFactoryHolder {
         this.links = links;
         this.id = id;
         this.localId = localId;
+        this.owner = owner;
     }
 
     public CompletableFuture<Integer> content(String content) {
@@ -55,8 +58,8 @@ public class Quote extends QueryFactoryHolder {
 
     public void delete() {
         builder().query("""
-                DELETE FROM quote WHERE id = ?
-                """)
+                        DELETE FROM quote WHERE id = ?
+                        """)
                 .paramsBuilder(stmt -> stmt.setInt(id))
                 .delete()
                 .executeSync();
@@ -114,6 +117,13 @@ public class Quote extends QueryFactoryHolder {
         Quote quote = (Quote) o;
 
         return id == quote.id;
+    }
+
+    public boolean canAccess(Member member) {
+        if (member.hasPermission(Permission.MESSAGE_MANAGE)) {
+            return true;
+        }
+        return owner == member.getIdLong();
     }
 
     @Override

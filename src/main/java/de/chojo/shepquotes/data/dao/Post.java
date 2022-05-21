@@ -2,6 +2,9 @@ package de.chojo.shepquotes.data.dao;
 
 import de.chojo.sqlutil.base.QueryFactoryHolder;
 import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.requests.ErrorResponse;
+import net.dv8tion.jda.api.requests.RestAction;
 import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -47,7 +50,9 @@ public class Post extends QueryFactoryHolder {
     }
 
     public void delete() {
-        quoteChannel.channel().ifPresent(channel -> channel.deleteMessageById(messageId).queue());
+        quoteChannel.channel().ifPresent(channel -> channel.deleteMessageById(messageId)
+                .queue(RestAction.getDefaultSuccess(),
+                        ErrorResponseException.ignore(ErrorResponse.UNKNOWN_CHANNEL, ErrorResponse.UNKNOWN_MESSAGE)));
         builder().query("""
                         DELETE FROM quote_posts WHERE message_id = ?
                         """)
