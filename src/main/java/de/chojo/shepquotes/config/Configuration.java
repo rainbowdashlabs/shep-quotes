@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import de.chojo.shepquotes.config.elements.BaseSettings;
 import de.chojo.shepquotes.config.elements.Database;
 import de.chojo.shepquotes.config.elements.Links;
@@ -26,11 +27,12 @@ public class Configuration {
     private ConfigFile configFile;
 
     private Configuration() {
-        objectMapper = new ObjectMapper()
+        objectMapper = JsonMapper.builder()
+                .configure(MapperFeature.ALLOW_FINAL_FIELDS_AS_MUTATORS, true)
+                .build()
                 .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
                 .setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE)
-                .setDefaultPrettyPrinter(new DefaultPrettyPrinter())
-                .configure(MapperFeature.ALLOW_FINAL_FIELDS_AS_MUTATORS, true);
+                .setDefaultPrettyPrinter(new DefaultPrettyPrinter());
     }
 
     public static Configuration create() {
