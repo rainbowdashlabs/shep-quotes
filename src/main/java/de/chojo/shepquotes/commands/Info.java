@@ -83,7 +83,6 @@ public class Info extends SimpleCommand {
                 var response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 contributors = mapper.readerForListOf(Contributor.class).readValue(response.body());
             } catch (IOException | InterruptedException e) {
-                log.error("Could not read response", e);
                 contributors = Collections.emptyList();
             }
 

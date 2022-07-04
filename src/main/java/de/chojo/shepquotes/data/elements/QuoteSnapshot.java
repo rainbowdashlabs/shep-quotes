@@ -22,7 +22,7 @@ public record QuoteSnapshot(int id, int localId, long guildId, long ownerId, Str
                 content,
                 sources().stream().map(Source::name).collect(Collectors.joining(", ")),
                 MentionUtil.user(ownerId()),
-                TimeFormat.DATE_TIME_LONG.format(modified.toEpochSecond(ZoneOffset.UTC)));
+                TimeFormat.DATE_TIME_LONG.format(modified.toEpochSecond(ZoneOffset.UTC) * 1000));
 
         return new EmbedBuilder()
                 .setTitle(String.format("#%s", localId()))
