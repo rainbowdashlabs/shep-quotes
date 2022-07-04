@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.chojo"
-version = "1.0"
+version = "1.0.0"
 
 repositories {
     maven("https://eldonexus.de/repository/maven-public")
@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("de.chojo", "cjda-util", "2.3.4+alpha.11")
+    implementation("de.chojo", "cjda-util", "2.6.2+alpha.13-DEV")
 
     // database
     implementation("org.postgresql", "postgresql", "42.4.0")
@@ -35,15 +35,13 @@ dependencies {
     testImplementation("org.junit.jupiter", "junit-jupiter")
 }
 
-tasks.getByName<Test>("test") {
-    useJUnitPlatform()
-}
-
 java {
     withSourcesJar()
     withJavadocJar()
 
-    sourceCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 tasks {
@@ -73,7 +71,7 @@ tasks {
         }
     }
 
-    shadowJar{
+    shadowJar {
         mergeServiceFiles()
         manifest {
             attributes(mapOf("Main-Class" to "de.chojo.repbot.ReputationBot"))
