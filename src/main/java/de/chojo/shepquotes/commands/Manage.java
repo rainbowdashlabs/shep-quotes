@@ -4,13 +4,16 @@ import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleArgument;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
+import de.chojo.jdautil.util.PermissionErrorHandler;
 import de.chojo.jdautil.wrapper.SlashCommandContext;
 import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.data.dao.Post;
-import de.chojo.shepquotes.data.dao.Quotes;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Channel;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+
+import java.util.Collections;
 
 public class Manage extends SimpleCommand {
     private final QuoteData quoteData;
@@ -41,6 +44,12 @@ public class Manage extends SimpleCommand {
                 event.reply(context.localize("error.noTextChannel")).setEphemeral(true).queue();
                 return;
             }
+
+            if (PermissionErrorHandler.assertAndHandle(channel.getAsTextChannel(), context.localizer().localizer(), Collections.emptyList(),
+                    Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND)) {
+                return;
+            }
+
             event.reply(context.localize("command.manage.quoteChannel.set")).setEphemeral(true).queue();
             quotes.quoteChannel().set(channel.getAsTextChannel());
         }
@@ -55,18 +64,13 @@ public class Manage extends SimpleCommand {
         }
 
         if ("refresh".equals(event.getSubcommandName())) {
-            var quoteChannel = quotes.quoteChannel();
-            var embed = new LocalizedEmbedBuilder(context.localizer())
-                    .setTitle("command.manage.info.embed.title")
-                    .addField("command.manage.info.embed.quoteChannel", quoteChannel.channel().map(Channel::getAsMention).orElse("phrase.notSet"), true)
-                    .build();
+            event.reply("command.manage.refresh.refresh").setEphemeral(true).queue();
             var count = quotes.quoteCount();
             for (var i = 0; i < count; i++) {
                 quotes.byLocalId(i)
                         .flatMap(currQuote -> quotes.quoteChannel().getPost(currQuote))
                         .ifPresent(Post::update);
             }
-            event.replyEmbeds(embed).setEphemeral(true).queue();
         }
     }
 }
