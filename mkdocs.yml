@@ -56,13 +56,13 @@ extra:
   social:
     - icon: fontawesome/solid/magnifying-glass
       name: TOS & Privacy
-      link: https://rainbowdashlabs.github.io/reputation-bot/tos-privacy
+      link: https://rainbowdashlabs.github.io/shep-quotes/tos-privacy
     - icon: material/android-messages
       name: Invite
-      link: https://discord.com/api/oauth2/authorize?client_id=871322553698906142&permissions=1342532672&scope=bot%20applications.commands
+      link: https://discord.com/oauth2/authorize?client_id=952974000177446922&permissions=139586817088&scope=bot%20applications.commands
     - icon: material/chat
       name: Support
-      link: https://discord.gg/5DrGmz7pHj
+      link: https://discord.gg/AJyFGAj
     - icon: fontawesome/solid/question
       name: FAQ
-      link: https://rainbowdashlabs.github.io/reputation-bot/faq
+      link: https://rainbowdashlabs.github.io/shep-quotes/faq

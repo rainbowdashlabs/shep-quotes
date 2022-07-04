@@ -25,6 +25,7 @@ import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.slf4j.Logger;
 
 import javax.security.auth.login.LoginException;
@@ -104,7 +105,7 @@ public class ShepQuotes {
                 .build();
 
         SqlUpdater.builder(dataSource, SqlType.POSTGRES)
-                .withLogger(LoggerAdapter.wrap(log))
+                .withLogger(LoggerAdapter.wrap(dbLogger))
                 .setSchemas(db.schema())
                 .setReplacements(new QueryReplacement("shep_quotes", db.schema()))
                 .execute();
@@ -128,8 +129,9 @@ public class ShepQuotes {
     }
 
     private void initShardManager() throws LoginException {
-        shardManager = DefaultShardManagerBuilder
-                .create(configuration.baseSettings().token(), GatewayIntent.GUILD_MESSAGES)
+        shardManager = DefaultShardManagerBuilder.createLight(configuration.baseSettings().token())
+                .enableIntents(GatewayIntent.GUILD_MESSAGES)
+                .enableCache(CacheFlag.MEMBER_OVERRIDES)
                 .setEventPool(Executors.newCachedThreadPool())
                 .build();
     }
