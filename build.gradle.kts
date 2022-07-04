@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "de.chojo"
-version = "1.0"
+version = "1.0.0"
 
 repositories {
     maven("https://eldonexus.de/repository/maven-public")
@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("de.chojo", "cjda-util", "2.5.0+alpha.12")
+    implementation("de.chojo", "cjda-util", "2.6.2+alpha.13-DEV")
 
     // database
     implementation("org.postgresql", "postgresql", "42.4.0")

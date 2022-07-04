@@ -1,12 +1,12 @@
 package de.chojo.shepquotes;
 
+import com.zaxxer.hikari.HikariDataSource;
 import de.chojo.jdautil.command.dispatching.CommandHub;
-import de.chojo.jdautil.localization.ILocalizer;
 import de.chojo.jdautil.localization.Localizer;
 import de.chojo.jdautil.localization.util.Language;
-import de.chojo.jdautil.util.Consumers;
 import de.chojo.shepquotes.commands.Add;
 import de.chojo.shepquotes.commands.Edit;
+import de.chojo.shepquotes.commands.Info;
 import de.chojo.shepquotes.commands.Manage;
 import de.chojo.shepquotes.commands.Quote;
 import de.chojo.shepquotes.commands.Remove;
@@ -17,6 +17,9 @@ import de.chojo.shepquotes.util.LogNotify;
 import de.chojo.sqlutil.databases.SqlType;
 import de.chojo.sqlutil.datasource.DataSourceCreator;
 import de.chojo.sqlutil.exceptions.ExceptionTransformer;
+import de.chojo.sqlutil.logging.LoggerAdapter;
+import de.chojo.sqlutil.updater.QueryReplacement;
+import de.chojo.sqlutil.updater.SqlUpdater;
 import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -24,7 +27,8 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 import org.slf4j.Logger;
 
 import javax.security.auth.login.LoginException;
-import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.concurrent.Executors;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -33,16 +37,16 @@ public class ShepQuotes {
     private static final Logger log = getLogger(ShepQuotes.class);
     private static ShepQuotes instance;
     private Configuration configuration;
-    private DataSource dataSource;
+    private HikariDataSource dataSource;
     private ShardManager shardManager;
     private QuoteData quoteData;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException, IOException {
         instance = new ShepQuotes();
         instance.start();
     }
 
-    private void start() {
+    private void start() throws SQLException, IOException {
         configuration = Configuration.create();
 
         initDb();
@@ -70,9 +74,9 @@ public class ShepQuotes {
                         new Manage(quoteData),
                         new Quote(quoteData),
                         new Remove(quoteData),
-                        new Source(quoteData)
+                        new Source(quoteData),
+                        Info.create(configuration)
                 )
-                .withPermissionCheck((event, simpleCommand) -> true)
                 .withDefaultModalService()
                 .withDefaultMenuService()
                 .withDefaultPagination()
@@ -80,7 +84,7 @@ public class ShepQuotes {
                 .build();
     }
 
-    private void initDb() {
+    private void initDb() throws IOException, SQLException {
         var dbLogger = getLogger("DbLogger");
         QueryBuilderConfig.setDefault(QueryBuilderConfig.builder()
                 .withExceptionHandler(err -> dbLogger.error("An error occured: {}", ExceptionTransformer.prettyException(err)))
@@ -95,9 +99,28 @@ public class ShepQuotes {
                         .user(db.user())
                         .password(db.password()))
                 .create()
+                .build();
+
+        SqlUpdater.builder(dataSource, SqlType.POSTGRES)
+                .withLogger(LoggerAdapter.wrap(log))
+                .setSchemas(db.schema())
+                .setReplacements(new QueryReplacement("shep_quotes", db.schema()))
+                .execute();
+
+        dataSource.close();
+
+        dataSource = DataSourceCreator.create(SqlType.POSTGRES)
+                .configure(builder -> builder
+                        .host(db.host())
+                        .port(db.port())
+                        .database(db.database())
+                        .user(db.user())
+                        .password(db.password()))
+                .create()
                 .forSchema(db.schema())
                 .withMaximumPoolSize(5)
                 .build();
+
 
         quoteData = new QuoteData(dataSource);
     }

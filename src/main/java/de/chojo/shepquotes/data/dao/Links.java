@@ -25,7 +25,7 @@ public class Links extends QueryFactoryHolder {
                         """)
                 .paramsBuilder(stmt -> stmt.setInt(quote.id()).setInt(source.id()))
                 .insert()
-                .execute();
+                .executeSync();
     }
 
     public void clear(Quote quote) {
@@ -43,6 +43,6 @@ public class Links extends QueryFactoryHolder {
                         """)
                 .paramsBuilder(stmt -> stmt.setInt(quote.id()))
                 .delete()
-                .execute();
+                .executeSync();
     }
 }

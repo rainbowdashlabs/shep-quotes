@@ -17,7 +17,8 @@ public class Add extends SimpleCommand {
     private final QuoteData quoteData;
 
     public Add(QuoteData quoteData) {
-        super(CommandMeta.builder("add", "command.add.descr"));
+        super(CommandMeta.builder("add", "command.add.descr")
+                .publicCommand());
         this.quoteData = quoteData;
     }
 

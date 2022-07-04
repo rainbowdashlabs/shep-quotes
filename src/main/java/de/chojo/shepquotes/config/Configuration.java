@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.chojo.shepquotes.config.elements.BaseSettings;
 import de.chojo.shepquotes.config.elements.Database;
+import de.chojo.shepquotes.config.elements.Links;
 import de.chojo.shepquotes.config.elements.PresenceSettings;
 import de.chojo.shepquotes.config.exception.ConfigurationException;
 import org.slf4j.Logger;
@@ -91,5 +92,9 @@ public class Configuration {
 
     public PresenceSettings presence() {
         return configFile.presence();
+    }
+
+    public Links links() {
+        return configFile.links();
     }
 }

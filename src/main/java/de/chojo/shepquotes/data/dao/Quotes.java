@@ -73,7 +73,7 @@ public class Quotes extends QueryFactoryHolder {
     public Optional<Quote> random() {
         return builder(Quote.class).
                 query("""
-                        SELECT id, local_id
+                        SELECT id, local_id, owner
                         FROM quote
                         LEFT JOIN local_ids li ON quote.id = li.quote_id
                         WHERE guild_id = ?
@@ -88,7 +88,7 @@ public class Quotes extends QueryFactoryHolder {
     public Optional<Quote> byLocalId(int id) {
         return builder(Quote.class).
                 query("""
-                        SELECT id, local_id
+                        SELECT id, local_id, owner
                         FROM quote q
                         LEFT JOIN local_ids gqi ON q.id = gqi.quote_id
                         WHERE guild_id = ? AND local_id = ?

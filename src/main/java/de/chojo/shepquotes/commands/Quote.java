@@ -4,6 +4,7 @@ import de.chojo.jdautil.command.CommandMeta;
 import de.chojo.jdautil.command.SimpleArgument;
 import de.chojo.jdautil.command.SimpleCommand;
 import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
+import de.chojo.jdautil.localization.util.Replacement;
 import de.chojo.jdautil.pagination.bag.PrivateListPageBag;
 import de.chojo.jdautil.pagination.bag.PrivatePageBag;
 import de.chojo.jdautil.util.Choice;
@@ -27,8 +28,9 @@ public class Quote extends SimpleCommand {
     public Quote(QuoteData quoteData) {
         super(CommandMeta.builder("quote", "command.quote.descr")
                 .addArgument(SimpleArgument.integer("id", "command.quote.arg.id"))
-                .addArgument(SimpleArgument.string("source", "command.quote.arg.source"))
+                .addArgument(SimpleArgument.string("source", "command.quote.arg.source").withAutoComplete())
                 .addArgument(SimpleArgument.string("content", "command.quote.arg.content"))
+                .publicCommand()
                 .build());
         this.quoteData = quoteData;
     }
@@ -38,14 +40,16 @@ public class Quote extends SimpleCommand {
         var quotes = quoteData.quotes(event.getGuild());
         var search = quotes.search();
         var localizer = context.localizer();
-
+        var term = "";
         List<de.chojo.shepquotes.data.dao.Quote> source = null;
         if (event.getOption("source") != null) {
-            source = search.source(event.getOption("source").getAsString());
+            term = event.getOption("source").getAsString();
+            source = search.source(term);
         }
 
         if (event.getOption("content") != null) {
-            source = search.content(event.getOption("content").getAsString());
+            term = event.getOption("content").getAsString();
+            source = search.content(term);
         }
 
         if (source != null) {
@@ -66,6 +70,7 @@ public class Quote extends SimpleCommand {
 
         Optional<de.chojo.shepquotes.data.dao.Quote> quote = null;
         if (event.getOption("id") != null) {
+            term = event.getOption("id").getAsString();
             quote = search.id(event.getOption("id").getAsInt());
         }
 
@@ -74,7 +79,7 @@ public class Quote extends SimpleCommand {
         }
 
         if (quote.isEmpty()) {
-            event.reply("error.notFound.").queue();
+            event.reply(localizer.localize("error.notFound.", Replacement.create("ID", term))).queue();
             return;
         }
 

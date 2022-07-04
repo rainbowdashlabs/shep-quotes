@@ -35,6 +35,7 @@ public class Source extends SimpleCommand {
                         .add(SimpleArgument.string("into", "command.source.rename.arg.into").asRequired()))
                 .addSubCommand("delete", "command.source.delete.descr", argsBuilder()
                         .add(SimpleArgument.string("name", "command.source.delete.arg.name").asRequired().withAutoComplete()))
+                .withPermission()
                 .build());
         this.quoteData = quoteData;
     }

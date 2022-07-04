@@ -21,7 +21,8 @@ public class Edit extends SimpleCommand {
 
     public Edit(QuoteData quoteData) {
         super(CommandMeta.builder("edit", "command.edit.descr")
-                .addArgument(SimpleArgument.integer("id", "command.edit.arg.id").asRequired()));
+                .addArgument(SimpleArgument.integer("id", "command.edit.arg.id").asRequired())
+                .publicCommand());
         this.quoteData = quoteData;
     }
 
