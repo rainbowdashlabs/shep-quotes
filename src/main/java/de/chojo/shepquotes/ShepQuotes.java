@@ -11,6 +11,7 @@ import de.chojo.shepquotes.commands.Manage;
 import de.chojo.shepquotes.commands.Quote;
 import de.chojo.shepquotes.commands.Remove;
 import de.chojo.shepquotes.commands.Source;
+import de.chojo.shepquotes.commands.Transfer;
 import de.chojo.shepquotes.config.Configuration;
 import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.util.LogNotify;
@@ -75,7 +76,8 @@ public class ShepQuotes {
                         new Quote(quoteData),
                         new Remove(quoteData),
                         new Source(quoteData),
-                        Info.create(configuration)
+                        Info.create(configuration),
+                        new Transfer(quoteData)
                 )
                 .withDefaultModalService()
                 .withDefaultMenuService()

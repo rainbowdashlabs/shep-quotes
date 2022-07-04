@@ -6,6 +6,7 @@ import de.chojo.sqlutil.conversion.ArrayConverter;
 import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -129,5 +130,15 @@ public class Quote extends QueryFactoryHolder {
     @Override
     public int hashCode() {
         return id;
+    }
+
+    public void owner(User owner) {
+        var success = builder().query("UPDATE quote SET owner = ? WHERE id = ?")
+                              .paramsBuilder(stmt -> stmt.setLong(owner.getIdLong()))
+                              .update()
+                              .executeSync() == 1;
+        if (success) {
+            this.owner = owner.getIdLong();
+        }
     }
 }
