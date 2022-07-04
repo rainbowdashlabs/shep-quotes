@@ -1,2 +1,1 @@
-rootProject.name = "ShepQuotes"
-
+rootProject.name = "shep-quotes"
