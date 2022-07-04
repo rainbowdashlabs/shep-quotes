@@ -35,7 +35,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class Info extends SimpleCommand {
     //private static final String ART = "**SmartieFox ☆*:.｡.o(≧▽≦)o.｡.:*☆**\n[Twitter](https://twitter.com/smartiefoxart) [Twitch](https://www.twitch.tv/smartiefox)";
-    private static final String SOURCE = "[rainbowdashlabs/reputation-bot](https://github.com/RainbowDashLabs/shep-quotes)";
+    private static final String SOURCE = "[rainbowdashlabs/shep-quotes](https://github.com/RainbowDashLabs/shep-quotes)";
     private static final Logger log = getLogger(Info.class);
     private final HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
     private final ObjectMapper mapper = new ObjectMapper()
@@ -73,7 +73,7 @@ public class Info extends SimpleCommand {
     private MessageEmbed getResponse(SlashCommandInteractionEvent event, SlashCommandContext context) {
         if (contributors == null || lastFetch.isBefore(Instant.now().minus(5, ChronoUnit.MINUTES))) {
             var request = HttpRequest.newBuilder().GET()
-                    .uri(URI.create("https://github.com/RainbowDashLabs/shep-quotes/contributors?anon=1"))
+                    .uri(URI.create("https://api.github.com/repos/rainbowdashlabs/shep-quotes/contributors?anon=1"))
                     .header("accept", "application/vnd.github.v3+json")
                     .header("User-Agent", "reputation-bot")
                     .build();
@@ -94,7 +94,7 @@ public class Info extends SimpleCommand {
                 var profile = HttpRequest.newBuilder().GET()
                         .uri(URI.create(contributor.url))
                         .header("accept", "application/vnd.github.v3+json")
-                        .header("User-Agent", "reputation-bot")
+                        .header("User-Agent", "shep-quotes")
                         .build();
 
                 try {
