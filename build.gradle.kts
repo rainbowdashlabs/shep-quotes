@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation("de.chojo", "cjda-util", "2.6.2+alpha.13-DEV")
+    implementation("de.chojo", "cjda-util", "2.7.0+alpha.17-SNAPSHOT")
 
     // database
     implementation("org.postgresql", "postgresql", "42.4.0")

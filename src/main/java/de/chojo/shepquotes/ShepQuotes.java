@@ -1,21 +1,21 @@
 package de.chojo.shepquotes;
 
 import com.zaxxer.hikari.HikariDataSource;
-import de.chojo.jdautil.command.dispatching.CommandHub;
+import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.jdautil.localization.Localizer;
-import de.chojo.jdautil.localization.util.Language;
 import de.chojo.jdautil.threading.ThreadFactories;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.shepquotes.commands.Add;
-import de.chojo.shepquotes.commands.Edit;
-import de.chojo.shepquotes.commands.Info;
-import de.chojo.shepquotes.commands.Manage;
-import de.chojo.shepquotes.commands.Quote;
-import de.chojo.shepquotes.commands.Remove;
-import de.chojo.shepquotes.commands.Source;
-import de.chojo.shepquotes.commands.Transfer;
+import de.chojo.shepquotes.commands.add.Add;
+import de.chojo.shepquotes.commands.edit.Edit;
+import de.chojo.shepquotes.commands.info.Info;
+import de.chojo.shepquotes.commands.manage.Manage;
+import de.chojo.shepquotes.commands.quote.Quote;
+import de.chojo.shepquotes.commands.remove.Remove;
+import de.chojo.shepquotes.commands.source.Source;
+import de.chojo.shepquotes.commands.transfer.Transfer;
 import de.chojo.shepquotes.config.Configuration;
 import de.chojo.shepquotes.data.QuoteData;
+import de.chojo.shepquotes.listener.SaveQuote;
 import de.chojo.sqlutil.databases.SqlType;
 import de.chojo.sqlutil.datasource.DataSourceCreator;
 import de.chojo.sqlutil.exceptions.ExceptionTransformer;
@@ -23,6 +23,8 @@ import de.chojo.sqlutil.logging.LoggerAdapter;
 import de.chojo.sqlutil.updater.QueryReplacement;
 import de.chojo.sqlutil.updater.SqlUpdater;
 import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -72,12 +74,11 @@ public class ShepQuotes {
     }
 
     private void initCommands() {
-        var localizer = Localizer.builder(Language.ENGLISH)
-                .addLanguage(Language.GERMAN)
+        var localizer = Localizer.builder(DiscordLocale.ENGLISH_US)
+                .addLanguage(DiscordLocale.GERMAN)
                 .build();
 
-        CommandHub.builder(shardManager)
-                .useGuildCommands()
+        InteractionHub.builder(shardManager)
                 .withCommands(
                         new Add(quoteData),
                         new Edit(quoteData),
@@ -85,7 +86,7 @@ public class ShepQuotes {
                         new Quote(quoteData),
                         new Remove(quoteData),
                         new Source(quoteData),
-                        Info.create(configuration),
+                        new Info(configuration),
                         new Transfer(quoteData)
                 )
                 .withDefaultModalService()
@@ -93,12 +94,19 @@ public class ShepQuotes {
                 .withDefaultPagination()
                 .withLocalizer(localizer)
                 .build();
+
+        var saveAsQuote = Commands.message("Save as quote").setGuildOnly(true);
+        var quoteStart = Commands.message("Quote Start").setGuildOnly(true);
+        var quoteEnd = Commands.message("Quote End").setGuildOnly(true);
+        shardManager.getShards().get(0).upsertCommand(saveAsQuote).queue();
+        shardManager.getShards().get(0).upsertCommand(quoteStart).queue();
+        shardManager.getShards().get(0).upsertCommand(quoteEnd).queue();
     }
 
     private void initDb() throws IOException, SQLException {
         var dbLogger = getLogger("DbLogger");
         QueryBuilderConfig.setDefault(QueryBuilderConfig.builder()
-                .withExceptionHandler(err -> dbLogger.error(LogNotify.NOTIFY_ADMIN,"An error occured: {}", ExceptionTransformer.prettyException(err)))
+                .withExceptionHandler(err -> dbLogger.error(LogNotify.NOTIFY_ADMIN, "An error occured: {}", ExceptionTransformer.prettyException(err), err))
                 .build());
 
         var dbc = configuration.database();
@@ -149,6 +157,7 @@ public class ShepQuotes {
                 .enableIntents(GatewayIntent.GUILD_MESSAGES)
                 .enableCache(CacheFlag.MEMBER_OVERRIDES)
                 .setEventPool(executor)
+                .addEventListeners(new SaveQuote(quoteData))
                 .build();
     }
 
