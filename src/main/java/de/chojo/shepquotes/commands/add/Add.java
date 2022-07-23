@@ -7,7 +7,7 @@ import de.chojo.shepquotes.data.QuoteData;
 public class Add extends SlashCommand {
     public Add(QuoteData quoteData) {
         super(Slash.of("add", "command.add.description")
-                .publicCommand()
+                .guildOnly()
                 .command(new Handler(quoteData)));
     }
 }

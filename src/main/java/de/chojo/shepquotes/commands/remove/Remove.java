@@ -8,6 +8,7 @@ import de.chojo.shepquotes.data.QuoteData;
 public class Remove extends SlashCommand {
     public Remove(QuoteData quoteData) {
         super(Slash.of("remove", "command.remove.description")
+                .guildOnly()
                 .command(new Handler(quoteData))
                 .argument(Argument.integer("id", "command.remove.id.description").asRequired()));
     }

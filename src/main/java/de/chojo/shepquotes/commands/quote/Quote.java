@@ -16,6 +16,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class Quote extends SlashCommand {
     public Quote(QuoteData quoteData) {
         super(Slash.of("quote", "command.quote.description")
+                .guildOnly()
                 .subCommand(SubCommand.of("id", "command.quote.id.description")
                         .handler(new Id(quoteData))
                         .argument(Argument.integer("id", "command.quote.id.id.description").asRequired()))

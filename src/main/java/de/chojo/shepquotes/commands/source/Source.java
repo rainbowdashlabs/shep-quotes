@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.Permission;
 public class Source extends SlashCommand {
     public Source(QuoteData quoteData) {
         super(Slash.of("source", "command.source.description")
+                .guildOnly()
                 .withPermission(Permission.MESSAGE_MANAGE)
                 .subCommand(SubCommand.of("merge", "command.source.merge.description")
                         .handler(new Merge(quoteData))

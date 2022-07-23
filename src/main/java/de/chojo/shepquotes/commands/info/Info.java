@@ -7,6 +7,7 @@ import de.chojo.shepquotes.config.Configuration;
 public class Info extends SlashCommand {
     public Info(Configuration configuration) {
         super(Slash.of("info", "command.info.description")
+                .guildOnly()
                 .command(Handler.create(configuration)));
     }
 }

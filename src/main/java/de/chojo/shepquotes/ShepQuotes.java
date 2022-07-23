@@ -93,6 +93,8 @@ public class ShepQuotes {
                 .withDefaultMenuService()
                 .withDefaultPagination()
                 .withLocalizer(localizer)
+                .cleanGuildCommands()
+                //.testMode()
                 .build();
 
         var saveAsQuote = Commands.message("Save as quote").setGuildOnly(true);

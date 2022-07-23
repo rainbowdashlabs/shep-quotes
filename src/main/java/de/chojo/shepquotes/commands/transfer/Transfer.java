@@ -8,6 +8,7 @@ import de.chojo.shepquotes.data.QuoteData;
 public class Transfer extends SlashCommand {
     public Transfer(QuoteData quoteData) {
         super(Slash.of("transfer", "command.transfer.description")
+                .guildOnly()
                 .command(new Handler(quoteData))
                 .argument(Argument.integer("id", "command.transfer.id.description").asRequired())
                 .argument(Argument.user("user", "command.transfer.user.description").asRequired()));

@@ -13,14 +13,15 @@ import net.dv8tion.jda.api.Permission;
 public class Manage extends SlashCommand {
     public Manage(QuoteData quoteData) {
         super(Slash.of("manage", "command.manage.description")
+                .guildOnly()
                 .withPermission(Permission.MESSAGE_MANAGE)
                 .subCommand(SubCommand.of("info", "command.manage.info.description")
                         .handler(new Info(quoteData)))
                 .subCommand(SubCommand.of("refresh", "command.manage.refresh.description")
                         .handler(new Refresh(quoteData)))
-                .subCommand(SubCommand.of("quote_channel", "command.manage.quoteChannel.description")
+                .subCommand(SubCommand.of("quotechannel", "command.manage.quotechannel.description")
                         .handler(new QuoteChannel(quoteData))
-                        .argument(Argument.channel("channel", "command.manage.quoteChannel.channel.description")))
+                        .argument(Argument.channel("channel", "command.manage.quotechannel.channel.description")))
         );
     }
 }

@@ -4,7 +4,6 @@ import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.util.PermissionErrorHandler;
 import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.shepquotes.data.QuoteData;
-import de.chojo.shepquotes.data.dao.Quotes;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -37,7 +36,7 @@ public class QuoteChannel implements SlashHandler {
             return;
         }
 
-        event.reply(context.localize("command.manage.quoteChannel.set")).setEphemeral(true).queue();
+        event.reply(context.localize("command.manage.quotechannel.set")).setEphemeral(true).queue();
         quotes.quoteChannel().set(channel.getAsChannel().asTextChannel());
     }
 }

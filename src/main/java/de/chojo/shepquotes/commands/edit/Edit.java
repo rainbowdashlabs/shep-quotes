@@ -9,7 +9,7 @@ public class Edit extends SlashCommand {
 
     public Edit(QuoteData quoteData) {
         super(Slash.of("edit", "command.edit.description")
-                .publicCommand()
+                .guildOnly()
                 .command(new Handler(quoteData))
                 .argument(Argument.integer("id", "command.edit.id.description").asRequired())
         );
