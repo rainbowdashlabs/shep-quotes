@@ -94,7 +94,7 @@ public class ShepQuotes {
                 .withDefaultPagination()
                 .withLocalizer(localizer)
                 .cleanGuildCommands()
-                //.testMode()
+                .testMode(true)
                 .build();
 
         var saveAsQuote = Commands.message("Save as quote").setGuildOnly(true);
