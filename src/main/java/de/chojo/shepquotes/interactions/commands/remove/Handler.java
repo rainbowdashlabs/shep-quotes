@@ -1,25 +1,21 @@
-package de.chojo.shepquotes.commands;
+package de.chojo.shepquotes.interactions.commands.remove;
 
-import de.chojo.jdautil.command.CommandMeta;
-import de.chojo.jdautil.command.SimpleArgument;
-import de.chojo.jdautil.command.SimpleCommand;
+import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.localization.util.Replacement;
-import de.chojo.jdautil.wrapper.SlashCommandContext;
+import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.data.dao.Post;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
-public class Remove extends SimpleCommand {
+public class Handler implements SlashHandler {
     private final QuoteData quoteData;
 
-    public Remove(QuoteData quoteData) {
-        super(CommandMeta.builder("remove", "command.remove.descr")
-                .addArgument(SimpleArgument.integer("id", "command.remove.arg.id").asRequired()));
+    public Handler(QuoteData quoteData) {
         this.quoteData = quoteData;
     }
 
     @Override
-    public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
+    public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         var quotes = quoteData.quotes(event.getGuild());
         var quoteById = quotes.byLocalId(event.getOption("id").getAsInt());
         if (quoteById.isEmpty()) {

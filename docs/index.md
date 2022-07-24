@@ -6,7 +6,6 @@ Shepard Quotes is hopefully the last quote bot you need.
 
 It provides several options to search in quotes and extensive management of quote sources.
 
-
 # Get help
 
 Join our discord if you need help, have questions or ideas for a new feature.
