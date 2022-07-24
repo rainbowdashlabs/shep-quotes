@@ -5,16 +5,20 @@ import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.jdautil.localization.Localizer;
 import de.chojo.jdautil.threading.ThreadFactories;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.shepquotes.commands.add.Add;
-import de.chojo.shepquotes.commands.edit.Edit;
-import de.chojo.shepquotes.commands.info.Info;
-import de.chojo.shepquotes.commands.manage.Manage;
-import de.chojo.shepquotes.commands.quote.Quote;
-import de.chojo.shepquotes.commands.remove.Remove;
-import de.chojo.shepquotes.commands.source.Source;
-import de.chojo.shepquotes.commands.transfer.Transfer;
+import de.chojo.shepquotes.interactions.commands.add.Add;
+import de.chojo.shepquotes.interactions.commands.edit.Edit;
+import de.chojo.shepquotes.interactions.commands.info.Info;
+import de.chojo.shepquotes.interactions.commands.manage.Manage;
+import de.chojo.shepquotes.interactions.commands.quote.Quote;
+import de.chojo.shepquotes.interactions.commands.remove.Remove;
+import de.chojo.shepquotes.interactions.commands.source.Source;
+import de.chojo.shepquotes.interactions.commands.transfer.Transfer;
 import de.chojo.shepquotes.config.Configuration;
 import de.chojo.shepquotes.data.QuoteData;
+import de.chojo.shepquotes.interactions.messages.End;
+import de.chojo.shepquotes.interactions.messages.Save;
+import de.chojo.shepquotes.interactions.messages.Select;
+import de.chojo.shepquotes.interactions.messages.Start;
 import de.chojo.shepquotes.listener.SaveQuote;
 import de.chojo.sqlutil.databases.SqlType;
 import de.chojo.sqlutil.datasource.DataSourceCreator;
@@ -88,7 +92,10 @@ public class ShepQuotes {
                         new Source(quoteData),
                         new Info(configuration),
                         new Transfer(quoteData)
-                )
+                ).withMessages(new End(),
+                        new Save(),
+                        new Select(),
+                        new Start())
                 .withDefaultModalService()
                 .withDefaultMenuService()
                 .withDefaultPagination()
@@ -96,13 +103,6 @@ public class ShepQuotes {
                 .cleanGuildCommands()
                 .testMode(true)
                 .build();
-
-        var saveAsQuote = Commands.message("Save as quote").setGuildOnly(true);
-        var quoteStart = Commands.message("Quote Start").setGuildOnly(true);
-        var quoteEnd = Commands.message("Quote End").setGuildOnly(true);
-        shardManager.getShards().get(0).upsertCommand(saveAsQuote).queue();
-        shardManager.getShards().get(0).upsertCommand(quoteStart).queue();
-        shardManager.getShards().get(0).upsertCommand(quoteEnd).queue();
     }
 
     private void initDb() throws IOException, SQLException {

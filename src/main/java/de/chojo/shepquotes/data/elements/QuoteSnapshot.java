@@ -1,7 +1,5 @@
 package de.chojo.shepquotes.data.elements;
 
-import de.chojo.jdautil.localization.ContextLocalizer;
-import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.util.MentionUtil;
 import de.chojo.shepquotes.data.dao.Source;
 import net.dv8tion.jda.api.EmbedBuilder;
