@@ -1,7 +1,7 @@
 package de.chojo.shepquotes.data.dao;
 
-import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.base.QueryFactory;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.entities.TextChannel;
 import org.slf4j.Logger;
 
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class QuoteChannel extends QueryFactoryHolder {
+public class QuoteChannel extends QueryFactory {
     private static final Logger log = getLogger(QuoteChannel.class);
     private final Quotes quotes;
 
@@ -28,7 +28,7 @@ public class QuoteChannel extends QueryFactoryHolder {
             channelId = builder(Long.class).query("""
                                 SELECT quote_channel FROM settings WHERE guild_id = ?;
                             """)
-                    .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
+                    .parameter(stmt -> stmt.setLong(quotes.guild().getIdLong()))
                     .readRow(r -> r.getLong("quote_channel"))
                     .firstSync()
                     .orElse(-1L);
@@ -43,9 +43,9 @@ public class QuoteChannel extends QueryFactoryHolder {
                         SET quote_channel = NULL
                         WHERE guild_id = ?;
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
+                .parameter(stmt -> stmt.setLong(quotes.guild().getIdLong()))
                 .update()
-                .executeSync();
+                .send();
     }
 
     public void set(TextChannel channel) {
@@ -56,9 +56,9 @@ public class QuoteChannel extends QueryFactoryHolder {
                             ON CONFLICT(guild_id)
                                 DO UPDATE SET quote_channel = excluded.quote_channel
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(channel.getGuild().getIdLong()).setLong(channelId))
+                .parameter(stmt -> stmt.setLong(channel.getGuild().getIdLong()).setLong(channelId))
                 .insert()
-                .executeSync();
+                .send();
         buildPosts();
     }
 
@@ -69,7 +69,7 @@ public class QuoteChannel extends QueryFactoryHolder {
                         FROM quote_posts p LEFT JOIN quote q ON p.quote_id = q.id
                         WHERE guild_id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
+                .parameter(stmt -> stmt.setLong(quotes.guild().getIdLong()))
                 .readRow(r -> new Post(this, quotes.getById(r.getInt("quote_id")).get(), r.getLong("message_id")))
                 .allSync();
     }
@@ -79,7 +79,7 @@ public class QuoteChannel extends QueryFactoryHolder {
                 .query("""
                         SELECT quote_id, message_id FROM quote_posts WHERE quote_id = ?;
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(quote.id()))
+                .parameter(stmt -> stmt.setInt(quote.id()))
                 .readRow(r -> new Post(this, quotes.getById(r.getInt("quote_id")).get(), r.getLong("message_id")))
                 .firstSync();
     }

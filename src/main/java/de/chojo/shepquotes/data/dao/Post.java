@@ -1,7 +1,7 @@
 package de.chojo.shepquotes.data.dao;
 
-import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.base.QueryFactory;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Post extends QueryFactoryHolder {
+public class Post extends QueryFactory {
     private static final Logger log = getLogger(Post.class);
     private final QuoteChannel quoteChannel;
     private final Quote quote;
@@ -43,9 +43,9 @@ public class Post extends QueryFactoryHolder {
             builder().query("""
                             INSERT INTO quote_posts(quote_id, message_id) VALUES (?,?)
                             """)
-                    .paramsBuilder(stmt -> stmt.setInt(quote.id()).setLong(messageId))
+                    .parameter(stmt -> stmt.setInt(quote.id()).setLong(messageId))
                     .insert()
-                    .executeSync();
+                    .send();
         });
     }
 
@@ -56,9 +56,9 @@ public class Post extends QueryFactoryHolder {
         builder().query("""
                         DELETE FROM quote_posts WHERE message_id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(messageId))
+                .parameter(stmt -> stmt.setLong(messageId))
                 .delete()
-                .execute();
+                .send();
     }
 
     public void update() {

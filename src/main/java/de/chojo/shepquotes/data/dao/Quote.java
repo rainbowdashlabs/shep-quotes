@@ -1,9 +1,9 @@
 package de.chojo.shepquotes.data.dao;
 
+import de.chojo.sadu.base.QueryFactory;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.wrapper.util.UpdateResult;
 import de.chojo.shepquotes.data.elements.QuoteSnapshot;
-import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.conversion.ArrayConverter;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -11,11 +11,10 @@ import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Quote extends QueryFactoryHolder {
+public class Quote extends QueryFactory {
     private static final Logger log = getLogger(Quote.class);
     private Quotes quotes;
     private Sources sources;
@@ -36,21 +35,21 @@ public class Quote extends QueryFactoryHolder {
         this.owner = owner;
     }
 
-    public CompletableFuture<Integer> content(String content) {
+    public CompletableFuture<UpdateResult> content(String content) {
         return builder().query("""
                         INSERT INTO content(quote_id, content) VALUES(?,?)
                         ON CONFLICT (quote_id)
                             DO UPDATE
                                 SET content = excluded.content
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(id).setString(content))
+                .parameter(stmt -> stmt.setInt(id).setString(content))
                 .append()
                 .query("""
                         UPDATE quote SET modified = (NOW() AT TIME ZONE 'utc') WHERE id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(id))
+                .parameter(stmt -> stmt.setInt(id))
                 .insert()
-                .execute();
+                .send();
     }
 
     public void link(Source source) {
@@ -61,9 +60,9 @@ public class Quote extends QueryFactoryHolder {
         builder().query("""
                         DELETE FROM quote WHERE id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(id))
+                .parameter(stmt -> stmt.setInt(id))
                 .delete()
-                .executeSync();
+                .sendSync();
         quotes.invalidate(this);
     }
 
@@ -86,15 +85,14 @@ public class Quote extends QueryFactoryHolder {
                         LEFT JOIN local_ids gqi ON q.id = gqi.quote_id
                         WHERE q.id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(id))
+                .parameter(stmt -> stmt.setInt(id))
                 .readRow(r -> {
-                    List<Integer> authorIds = ArrayConverter.toList(r, "ids");
                     return new QuoteSnapshot(r.getInt("id"),
                             r.getInt("local_id"),
                             r.getLong("guild_id"),
                             r.getLong("owner"),
                             r.getString("content"),
-                            authorIds.stream().map(this.sources::getAuthorById).collect(Collectors.toList()),
+                            r.getList("ids"),
                             r.getTimestamp("created").toLocalDateTime(),
                             r.getTimestamp("modified").toLocalDateTime());
                 })
@@ -134,9 +132,10 @@ public class Quote extends QueryFactoryHolder {
 
     public void owner(User owner) {
         var success = builder().query("UPDATE quote SET owner = ? WHERE id = ?")
-                              .paramsBuilder(stmt -> stmt.setLong(owner.getIdLong()))
-                              .update()
-                              .executeSync() == 1;
+                .parameter(stmt -> stmt.setLong(owner.getIdLong()))
+                .update()
+                .sendSync()
+                .changed();
         if (success) {
             this.owner = owner.getIdLong();
         }

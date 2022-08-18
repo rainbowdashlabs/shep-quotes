@@ -1,14 +1,14 @@
 package de.chojo.shepquotes.data.dao;
 
-import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.base.QueryFactory;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
 import org.slf4j.Logger;
 
 import javax.sql.DataSource;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Links extends QueryFactoryHolder {
+public class Links extends QueryFactory {
     private static final Logger log = getLogger(Links.class);
 
     public Links(DataSource dataSource) {
@@ -23,26 +23,26 @@ public class Links extends QueryFactoryHolder {
                         ON CONFLICT
                         DO NOTHING
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(quote.id()).setInt(source.id()))
+                .parameter(stmt -> stmt.setInt(quote.id()).setInt(source.id()))
                 .insert()
-                .executeSync();
+                .send();
     }
 
     public void clear(Quote quote) {
         builder().query("""
                         DELETE FROM source_links WHERE quote_id = ?;
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(quote.id()))
+                .parameter(stmt -> stmt.setInt(quote.id()))
                 .delete()
-                .executeSync();
+                .send();
     }
 
     public void clear(Source quote) {
         builder().query("""
                         DELETE FROM source_links WHERE quote_id = ?;
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(quote.id()))
+                .parameter(stmt -> stmt.setInt(quote.id()))
                 .delete()
-                .executeSync();
+                .send();
     }
 }

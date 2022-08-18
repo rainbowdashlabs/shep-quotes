@@ -1,7 +1,7 @@
 package de.chojo.shepquotes.data.dao;
 
-import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.base.QueryFactory;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.entities.Guild;
 import org.slf4j.Logger;
 
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Search extends QueryFactoryHolder {
+public class Search extends QueryFactory {
 
     private static final Logger log = getLogger(Search.class);
     private final long guild;
@@ -32,7 +32,7 @@ public class Search extends QueryFactoryHolder {
                         LEFT JOIN quote q ON c.quote_id = q.id
                         WHERE q.guild_id = ? AND c.content ILIKE ?
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", content)))
+                .parameter(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", content)))
                 .readRow(r -> r.getInt("quote_id"))
                 .allSync()
                 .stream()
@@ -54,7 +54,7 @@ public class Search extends QueryFactoryHolder {
                         FROM source_links l
                         WHERE l.source_id = ANY (SELECT a.id FROM sources a)
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", name)))
+                .parameter(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", name)))
                 .readRow(r -> r.getInt("id"))
                 .allSync()
                 .stream()
@@ -71,7 +71,7 @@ public class Search extends QueryFactoryHolder {
                         FROM source_links l
                         WHERE l.source_id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(source.id()))
+                .parameter(stmt -> stmt.setInt(source.id()))
                 .readRow(r -> r.getInt("id"))
                 .allSync()
                 .stream()

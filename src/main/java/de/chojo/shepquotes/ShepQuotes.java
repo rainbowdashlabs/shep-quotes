@@ -5,6 +5,14 @@ import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.jdautil.localization.Localizer;
 import de.chojo.jdautil.threading.ThreadFactories;
 import de.chojo.logutil.marker.LogNotify;
+import de.chojo.sadu.databases.PostgreSql;
+import de.chojo.sadu.datasource.DataSourceCreator;
+import de.chojo.sadu.exceptions.ExceptionTransformer;
+import de.chojo.sadu.updater.QueryReplacement;
+import de.chojo.sadu.updater.SqlUpdater;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
+import de.chojo.shepquotes.config.Configuration;
+import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.interactions.commands.add.Add;
 import de.chojo.shepquotes.interactions.commands.edit.Edit;
 import de.chojo.shepquotes.interactions.commands.info.Info;
@@ -13,22 +21,12 @@ import de.chojo.shepquotes.interactions.commands.quote.Quote;
 import de.chojo.shepquotes.interactions.commands.remove.Remove;
 import de.chojo.shepquotes.interactions.commands.source.Source;
 import de.chojo.shepquotes.interactions.commands.transfer.Transfer;
-import de.chojo.shepquotes.config.Configuration;
-import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.interactions.messages.End;
 import de.chojo.shepquotes.interactions.messages.Save;
 import de.chojo.shepquotes.interactions.messages.Select;
 import de.chojo.shepquotes.interactions.messages.Start;
 import de.chojo.shepquotes.listener.SaveQuote;
-import de.chojo.sqlutil.databases.SqlType;
-import de.chojo.sqlutil.datasource.DataSourceCreator;
-import de.chojo.sqlutil.exceptions.ExceptionTransformer;
-import de.chojo.sqlutil.logging.LoggerAdapter;
-import de.chojo.sqlutil.updater.QueryReplacement;
-import de.chojo.sqlutil.updater.SqlUpdater;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -112,37 +110,22 @@ public class ShepQuotes {
                 .build());
 
         var dbc = configuration.database();
-        dataSource = DataSourceCreator.create(SqlType.POSTGRES)
+        dataSource = DataSourceCreator.create(PostgreSql.get())
                 .configure(builder -> builder
                         .host(dbc.host())
                         .port(dbc.port())
                         .database(dbc.database())
                         .user(dbc.user())
-                        .password(dbc.password()))
+                        .password(dbc.password())
+                        .currentSchema(dbc.schema()))
                 .create()
                 .build();
 
 
-        SqlUpdater.builder(dataSource, SqlType.POSTGRES)
-                .withLogger(LoggerAdapter.wrap(dbLogger))
+        SqlUpdater.builder(dataSource, PostgreSql.get())
                 .setSchemas(dbc.schema())
                 .setReplacements(new QueryReplacement("shep_quotes", dbc.schema()))
                 .execute();
-
-        dataSource.close();
-
-        dataSource = DataSourceCreator.create(SqlType.POSTGRES)
-                .configure(builder -> builder
-                        .host(dbc.host())
-                        .port(dbc.port())
-                        .database(dbc.database())
-                        .user(dbc.user())
-                        .password(dbc.password()))
-                .create()
-                .forSchema(dbc.schema())
-                .withMaximumPoolSize(5)
-                .build();
-
 
         quoteData = new QuoteData(dataSource);
     }

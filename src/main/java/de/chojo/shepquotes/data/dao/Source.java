@@ -1,12 +1,12 @@
 package de.chojo.shepquotes.data.dao;
 
-import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.base.QueryFactory;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
 import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Source extends QueryFactoryHolder {
+public class Source extends QueryFactory {
     private static final Logger log = getLogger(Source.class);
 
     private final Sources sources;
@@ -52,14 +52,14 @@ public class Source extends QueryFactoryHolder {
                         WHERE quote_id = ANY (SELECT quote_id FROM to_delete)
                             AND source_id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(old.id()).setInt(id).setInt(old.id()))
+                .parameter(stmt -> stmt.setInt(old.id()).setInt(id).setInt(old.id()))
                 .append()
                 .query("""
                         UPDATE source_links SET source_id = ? WHERE source_id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(id).setInt(old.id()))
+                .parameter(stmt -> stmt.setInt(id).setInt(old.id()))
                 .update()
-                .execute();
+                .send();
         old.delete();
         sources.invalidate(this);
     }
@@ -81,16 +81,16 @@ public class Source extends QueryFactoryHolder {
         builder().query("""
                         UPDATE source SET name = ? WHERE id = ?;
                         """)
-                .paramsBuilder(stmt -> stmt.setString(name).setInt(id))
+                .parameter(stmt -> stmt.setString(name).setInt(id))
                 .update()
-                .execute();
+                .send();
     }
 
     public void delete() {
         builder().query("DELETE FROM source WHERE id = ?")
-                .paramsBuilder(stmt -> stmt.setInt(id))
+                .parameter(stmt -> stmt.setInt(id))
                 .delete()
-                .execute();
+                .send();
         sources.invalidate(this);
     }
 

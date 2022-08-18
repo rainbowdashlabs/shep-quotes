@@ -27,7 +27,10 @@ dependencies {
 
     // utils
     implementation("org.apache.commons", "commons-lang3", "3.12.0")
-    implementation("de.chojo", "sql-util", "1.4.6")
+    implementation("de.chojo.sadu", "sadu-queries", "1.0.0-DEV")
+    implementation("de.chojo.sadu", "sadu-postgresql", "1.0.0-DEV")
+    implementation("de.chojo.sadu", "sadu-datasource", "1.0.0-DEV")
+    implementation("de.chojo.sadu", "sadu-updater", "1.0.0-DEV")
     implementation("de.chojo", "log-util", "1.0.0")
     implementation("com.google.guava", "guava", "31.1-jre")
 

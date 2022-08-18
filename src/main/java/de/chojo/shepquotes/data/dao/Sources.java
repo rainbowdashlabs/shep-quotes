@@ -2,12 +2,12 @@ package de.chojo.shepquotes.data.dao;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import de.chojo.sqlutil.base.QueryFactoryHolder;
-import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.base.QueryFactory;
+import de.chojo.sadu.wrapper.QueryBuilderConfig;
+import de.chojo.sadu.wrapper.util.Row;
 import net.dv8tion.jda.api.entities.Guild;
 import org.slf4j.Logger;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Sources extends QueryFactoryHolder {
+public class Sources extends QueryFactory {
 
     private final Cache<Integer, Source> sourceCache = CacheBuilder.newBuilder().expireAfterAccess(30, TimeUnit.MINUTES).build();
     private static final Logger log = getLogger(Sources.class);
@@ -37,7 +37,7 @@ public class Sources extends QueryFactoryHolder {
                         LEFT JOIN source s ON s.id = l.source_id
                         WHERE l.quote_id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setInt(quote.id()))
+                .parameter(stmt -> stmt.setInt(quote.id()))
                 .readRow(r -> new Source(this, links, r.getInt(1), r.getString("name")))
                 .allSync();
     }
@@ -51,7 +51,7 @@ public class Sources extends QueryFactoryHolder {
                 .query("""
                         SELECT id, name FROM source WHERE name ILIKE ? AND guild_id = ?
                         """)
-                .paramsBuilder(stmt -> stmt.setString(name).setLong(guild))
+                .parameter(stmt -> stmt.setString(name).setLong(guild))
                 .readRow(this::buildSource)
                 .firstSync();
     }
@@ -61,7 +61,7 @@ public class Sources extends QueryFactoryHolder {
                 .query("""
                         INSERT INTO source(name, guild_id) VALUES(?, ?) RETURNING id, name
                         """)
-                .paramsBuilder(stmt -> stmt.setString(name).setLong(guild))
+                .parameter(stmt -> stmt.setString(name).setLong(guild))
                 .readRow(this::buildSource)
                 .firstSync()
                 .get();
@@ -74,7 +74,7 @@ public class Sources extends QueryFactoryHolder {
                     .query("""
                             SELECT id, name FROM source WHERE id = ?
                             """)
-                    .paramsBuilder(stmt -> stmt.setInt(id))
+                    .parameter(stmt -> stmt.setInt(id))
                     .readRow(r -> new Source(this, links, r.getInt("id"), r.getString("name")))
                     .firstSync().get());
         } catch (ExecutionException e) {
@@ -82,7 +82,7 @@ public class Sources extends QueryFactoryHolder {
         }
     }
 
-    private Source buildSource(ResultSet r) throws SQLException {
+    private Source buildSource(Row r) throws SQLException {
         return ofIdAndName(r.getInt("id"), r.getString("name"));
     }
 
@@ -106,13 +106,13 @@ public class Sources extends QueryFactoryHolder {
         if (value.isBlank()) {
             return builder(String.class).query("""
                             SELECT name FROM source WHERE guild_id = ? LIMIT 15
-                            """).paramsBuilder(stmt -> stmt.setLong(guild))
+                            """).parameter(stmt -> stmt.setLong(guild))
                     .readRow(r -> r.getString("name"))
                     .allSync();
         }
         return builder(String.class).query("""
                             SELECT name FROM source WHERE guild_id = ? AND name ILIKE ? LIMIT 15;
-                        """).paramsBuilder(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", value)))
+                        """).parameter(stmt -> stmt.setLong(guild).setString(String.format("%%%s%%", value)))
                 .readRow(r -> r.getString("name"))
                 .allSync();
     }
