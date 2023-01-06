@@ -15,6 +15,7 @@ import de.chojo.shepquotes.commands.Remove;
 import de.chojo.shepquotes.commands.Source;
 import de.chojo.shepquotes.commands.Transfer;
 import de.chojo.shepquotes.config.Configuration;
+import de.chojo.shepquotes.config.elements.Database;
 import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.sqlutil.databases.SqlType;
 import de.chojo.sqlutil.datasource.DataSourceCreator;
@@ -98,20 +99,11 @@ public class ShepQuotes {
     private void initDb() throws IOException, SQLException {
         var dbLogger = getLogger("DbLogger");
         QueryBuilderConfig.setDefault(QueryBuilderConfig.builder()
-                .withExceptionHandler(err -> dbLogger.error(LogNotify.NOTIFY_ADMIN,"An error occured: {}", ExceptionTransformer.prettyException(err)))
+                .withExceptionHandler(err -> dbLogger.error(LogNotify.NOTIFY_ADMIN, "An error occured: {}", ExceptionTransformer.prettyException(err)))
                 .build());
 
         var dbc = configuration.database();
-        dataSource = DataSourceCreator.create(SqlType.POSTGRES)
-                .configure(builder -> builder
-                        .host(dbc.host())
-                        .port(dbc.port())
-                        .database(dbc.database())
-                        .user(dbc.user())
-                        .password(dbc.password()))
-                .create()
-                .build();
-
+        initConnection(dbc);
 
         SqlUpdater.builder(dataSource, SqlType.POSTGRES)
                 .withLogger(LoggerAdapter.wrap(dbLogger))
@@ -146,10 +138,32 @@ public class ShepQuotes {
                 .build());
 
         shardManager = DefaultShardManagerBuilder.createLight(configuration.baseSettings().token())
-                .enableIntents(GatewayIntent.GUILD_MESSAGES)
-                .enableCache(CacheFlag.MEMBER_OVERRIDES)
-                .setEventPool(executor)
-                .build();
+                                                 .enableIntents(GatewayIntent.GUILD_MESSAGES)
+                                                 .enableCache(CacheFlag.MEMBER_OVERRIDES)
+                                                 .setEventPool(executor)
+                                                 .build();
+    }
+
+    private void initConnection(Database dbc) {
+        try {
+
+            dataSource = DataSourceCreator.create(SqlType.POSTGRES)
+                    .configure(builder -> builder
+                            .host(dbc.host())
+                            .port(dbc.port())
+                            .database(dbc.database())
+                            .user(dbc.user())
+                            .password(dbc.password()))
+                    .create()
+                    .build();
+        } catch (Exception e) {
+            log.error("Could not connect to database. Retrying in 10.");
+            try {
+                Thread.sleep(1000 * 10);
+            } catch (InterruptedException ignore) {
+            }
+            initConnection(dbc);
+        }
     }
 
     public void shutdown() {
