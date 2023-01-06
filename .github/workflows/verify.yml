@@ -30,3 +30,12 @@ jobs:
         run: |
           find src/main/resources/locale* -type f -exec file --mime {} \; | grep -v charset=utf-8 && NOT_UTF_FOUND=1 || true
           [[ \"$NOT_UTF_FOUND\" == \"1\" ]] && exit 1 || true
+
+  build-docker:
+    runs-on: ubuntu-latest
+    name: Docker build
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build as Docker image
+        run: docker build .
