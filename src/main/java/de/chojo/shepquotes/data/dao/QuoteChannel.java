@@ -2,7 +2,7 @@ package de.chojo.shepquotes.data.dao;
 
 import de.chojo.sqlutil.base.QueryFactoryHolder;
 import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -26,12 +26,12 @@ public class QuoteChannel extends QueryFactoryHolder {
     public Optional<TextChannel> channel() {
         if (channelId == -1L) {
             channelId = builder(Long.class).query("""
-                                SELECT quote_channel FROM settings WHERE guild_id = ?;
-                            """)
-                    .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
-                    .readRow(r -> r.getLong("quote_channel"))
-                    .firstSync()
-                    .orElse(-1L);
+                                                      SELECT quote_channel FROM settings WHERE guild_id = ?;
+                                                  """)
+                                           .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
+                                           .readRow(r -> r.getLong("quote_channel"))
+                                           .firstSync()
+                                           .orElse(-1L);
         }
         return Optional.ofNullable(quotes.guild().getTextChannelById(channelId));
     }
@@ -43,9 +43,9 @@ public class QuoteChannel extends QueryFactoryHolder {
                         SET quote_channel = NULL
                         WHERE guild_id = ?;
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
-                .update()
-                .executeSync();
+                 .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
+                 .update()
+                 .executeSync();
     }
 
     public void set(TextChannel channel) {
@@ -56,29 +56,30 @@ public class QuoteChannel extends QueryFactoryHolder {
                             ON CONFLICT(guild_id)
                                 DO UPDATE SET quote_channel = excluded.quote_channel
                         """)
-                .paramsBuilder(stmt -> stmt.setLong(channel.getGuild().getIdLong()).setLong(channelId))
-                .insert()
-                .executeSync();
+                 .paramsBuilder(stmt -> stmt.setLong(channel.getGuild().getIdLong()).setLong(channelId))
+                 .insert()
+                 .executeSync();
         buildPosts();
     }
 
     public List<Post> posts() {
         return builder(Post.class).query("""
-                        SELECT quote_id,
-                            message_id
-                        FROM quote_posts p LEFT JOIN quote q ON p.quote_id = q.id
-                        WHERE guild_id = ?
-                        """)
-                .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
-                .readRow(r -> new Post(this, quotes.getById(r.getInt("quote_id")).get(), r.getLong("message_id")))
-                .allSync();
+                                         SELECT quote_id,
+                                             message_id
+                                         FROM quote_posts p LEFT JOIN quote q ON p.quote_id = q.id
+                                         WHERE guild_id = ?
+                                         """)
+                                  .paramsBuilder(stmt -> stmt.setLong(quotes.guild().getIdLong()))
+                                  .readRow(r -> new Post(this, quotes.getById(r.getInt("quote_id"))
+                                                                     .get(), r.getLong("message_id")))
+                                  .allSync();
     }
 
     public Optional<Post> getPost(Quote quote) {
         return builder(Post.class)
                 .query("""
-                        SELECT quote_id, message_id FROM quote_posts WHERE quote_id = ?;
-                        """)
+                       SELECT quote_id, message_id FROM quote_posts WHERE quote_id = ?;
+                       """)
                 .paramsBuilder(stmt -> stmt.setInt(quote.id()))
                 .readRow(r -> new Post(this, quotes.getById(r.getInt("quote_id")).get(), r.getLong("message_id")))
                 .firstSync();

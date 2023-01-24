@@ -24,7 +24,7 @@ dependencies {
     implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.19.0")
     implementation("club.minnced", "discord-webhooks", "0.8.2")
 
-    implementation("de.chojo", "cjda-util", "2.6.2+alpha.13-DEV"){
+    implementation("de.chojo", "cjda-util", "2.7.8+beta.2"){
         exclude(group = "club.minnced", module = "opus-java")
         exclude(group = "org.slf4j", module = "slf4j-api")
     }
@@ -32,7 +32,9 @@ dependencies {
     // utils
     implementation("org.apache.commons", "commons-lang3", "3.12.0")
     implementation("de.chojo", "sql-util", "1.5.0")
-    implementation("de.chojo", "log-util", "1.0.1")
+    implementation("de.chojo", "log-util", "1.0.1"){
+        exclude(group="org.apache.logging.log4j")
+    }
     implementation("com.google.guava", "guava", "31.1-jre")
 
     // unit testing

@@ -63,6 +63,6 @@ public class Post extends QueryFactoryHolder {
 
     public void update() {
         quoteChannel.channel()
-                .ifPresent(channel -> channel.editMessageById(messageId, quote.snapshot().message()).complete());
+                .ifPresent(channel -> channel.editMessageEmbedsById(messageId, quote.snapshot().embed()).complete());
     }
 }

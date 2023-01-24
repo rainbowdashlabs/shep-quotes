@@ -1,19 +1,18 @@
 package de.chojo.shepquotes;
 
 import com.zaxxer.hikari.HikariDataSource;
-import de.chojo.jdautil.command.dispatching.CommandHub;
+import de.chojo.jdautil.interactions.dispatching.InteractionHub;
 import de.chojo.jdautil.localization.Localizer;
-import de.chojo.jdautil.localization.util.Language;
 import de.chojo.jdautil.threading.ThreadFactories;
 import de.chojo.logutil.marker.LogNotify;
-import de.chojo.shepquotes.commands.Add;
-import de.chojo.shepquotes.commands.Edit;
-import de.chojo.shepquotes.commands.Info;
-import de.chojo.shepquotes.commands.Manage;
-import de.chojo.shepquotes.commands.Quote;
-import de.chojo.shepquotes.commands.Remove;
-import de.chojo.shepquotes.commands.Source;
-import de.chojo.shepquotes.commands.Transfer;
+import de.chojo.shepquotes.commands.add.Add;
+import de.chojo.shepquotes.commands.edit.Edit;
+import de.chojo.shepquotes.commands.info.Info;
+import de.chojo.shepquotes.commands.manage.Manage;
+import de.chojo.shepquotes.commands.quote.Quote;
+import de.chojo.shepquotes.commands.remove.Remove;
+import de.chojo.shepquotes.commands.source.Source;
+import de.chojo.shepquotes.commands.transfer.Transfer;
 import de.chojo.shepquotes.config.Configuration;
 import de.chojo.shepquotes.config.elements.Database;
 import de.chojo.shepquotes.data.QuoteData;
@@ -24,6 +23,7 @@ import de.chojo.sqlutil.logging.LoggerAdapter;
 import de.chojo.sqlutil.updater.QueryReplacement;
 import de.chojo.sqlutil.updater.SqlUpdater;
 import de.chojo.sqlutil.wrapper.QueryBuilderConfig;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
@@ -73,12 +73,11 @@ public class ShepQuotes {
     }
 
     private void initCommands() {
-        var localizer = Localizer.builder(Language.ENGLISH)
-                .addLanguage(Language.GERMAN)
+        var localizer = Localizer.builder(DiscordLocale.ENGLISH_US)
+                .addLanguage(DiscordLocale.GERMAN)
                 .build();
 
-        CommandHub.builder(shardManager)
-                .useGuildCommands()
+        InteractionHub.builder(shardManager)
                 .withCommands(
                         new Add(quoteData),
                         new Edit(quoteData),

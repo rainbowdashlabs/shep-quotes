@@ -1,15 +1,14 @@
-package de.chojo.shepquotes.commands;
+package de.chojo.shepquotes.commands.quote.handler;
 
-import de.chojo.jdautil.command.CommandMeta;
-import de.chojo.jdautil.command.SimpleArgument;
-import de.chojo.jdautil.command.SimpleCommand;
+import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.localization.util.Replacement;
 import de.chojo.jdautil.pagination.bag.PrivateListPageBag;
 import de.chojo.jdautil.pagination.bag.PrivatePageBag;
 import de.chojo.jdautil.util.Choice;
-import de.chojo.jdautil.wrapper.SlashCommandContext;
+import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.shepquotes.data.QuoteData;
+import de.chojo.shepquotes.data.dao.Quote;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -21,27 +20,22 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Quote extends SimpleCommand {
+//TODO: Split into subcommands
+public class Default implements SlashHandler {
+    private static final Logger log = getLogger(Default.class);
     private final QuoteData quoteData;
-    private static final Logger log = getLogger(Quote.class);
 
-    public Quote(QuoteData quoteData) {
-        super(CommandMeta.builder("quote", "command.quote.descr")
-                .addArgument(SimpleArgument.integer("id", "command.quote.arg.id"))
-                .addArgument(SimpleArgument.string("source", "command.quote.arg.source").withAutoComplete())
-                .addArgument(SimpleArgument.string("content", "command.quote.arg.content"))
-                .publicCommand()
-                .build());
+    public Default(QuoteData quoteData) {
         this.quoteData = quoteData;
     }
 
     @Override
-    public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
+    public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         var quotes = quoteData.quotes(event.getGuild());
         var search = quotes.search();
-        var localizer = context.localizer();
+        var localizer = context.guildLocalizer();
         var term = "";
-        List<de.chojo.shepquotes.data.dao.Quote> source = null;
+        List<Quote> source = null;
         if (event.getOption("source") != null) {
             term = event.getOption("source").getAsString();
             source = search.source(term);
@@ -61,14 +55,15 @@ public class Quote extends SimpleCommand {
 
                 @Override
                 public CompletableFuture<MessageEmbed> buildEmptyPage() {
-                    return CompletableFuture.completedFuture(new LocalizedEmbedBuilder(context.localizer()).setTitle("error.noQuote").build());
+                    return CompletableFuture.completedFuture(new LocalizedEmbedBuilder(context.guildLocalizer()).setTitle("error.noQuote")
+                                                                                                           .build());
                 }
             });
             return;
         }
 
 
-        Optional<de.chojo.shepquotes.data.dao.Quote> quote = null;
+        Optional<Quote> quote = null;
         if (event.getOption("id") != null) {
             term = event.getOption("id").getAsString();
             quote = search.id(event.getOption("id").getAsInt());
@@ -79,28 +74,32 @@ public class Quote extends SimpleCommand {
         }
 
         if (quote.isEmpty()) {
-            event.reply(localizer.localize("error.notFound.", Replacement.create("ID", term))).queue();
+            event.reply(localizer.localize("error.unkownQuote", Replacement.create("ID", term))).queue();
             return;
         }
 
-        context.registerPage(new QuoteScroll(quotes.quoteCount(), event.getUser().getIdLong(), quote.get().localId()) {
+        context.registerPage(new QuoteScroll(quotes.quoteCount(), event.getUser()
+                                                                       .getIdLong(), quote.get()
+                                                                                          .localId()) {
             @Override
             public CompletableFuture<MessageEmbed> buildPage() {
-                return CompletableFuture.supplyAsync(() -> quotes.byLocalId(current() + 1).get().snapshot().embed()).exceptionally(err -> {
-                    log.error("Error", err);
-                    return null;
-                });
+                return CompletableFuture.supplyAsync(() -> quotes.byLocalId(current() + 1).get().snapshot().embed())
+                                        .exceptionally(err -> {
+                                            log.error("Error", err);
+                                            return null;
+                                        });
             }
 
             @Override
             public CompletableFuture<MessageEmbed> buildEmptyPage() {
-                return CompletableFuture.completedFuture(new LocalizedEmbedBuilder(context.localizer()).setTitle("error.noQuote").build());
+                return CompletableFuture.completedFuture(new LocalizedEmbedBuilder(context.guildLocalizer()).setTitle("error.noQuote")
+                                                                                                       .build());
             }
         });
     }
 
     @Override
-    public void onAutoComplete(CommandAutoCompleteInteractionEvent event, SlashCommandContext slashCommandContext) {
+    public void onAutoComplete(CommandAutoCompleteInteractionEvent event, EventContext context) {
         if ("source".equals(event.getFocusedOption().getName())) {
             suggest(event);
         }

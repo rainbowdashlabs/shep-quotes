@@ -1,33 +1,28 @@
-package de.chojo.shepquotes.commands;
+package de.chojo.shepquotes.commands.edit.handler;
 
-import de.chojo.jdautil.command.CommandMeta;
-import de.chojo.jdautil.command.SimpleArgument;
-import de.chojo.jdautil.command.SimpleCommand;
+import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.modals.handler.ModalHandler;
 import de.chojo.jdautil.modals.handler.TextInputHandler;
-import de.chojo.jdautil.wrapper.SlashCommandContext;
+import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.shepquotes.data.QuoteData;
 import de.chojo.shepquotes.data.dao.Post;
-import de.chojo.shepquotes.data.dao.Quote;
 import de.chojo.shepquotes.data.dao.Source;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class Edit extends SimpleCommand {
+public class Default implements SlashHandler {
+
+
     private final QuoteData quoteData;
 
-    public Edit(QuoteData quoteData) {
-        super(CommandMeta.builder("edit", "command.edit.descr")
-                .addArgument(SimpleArgument.integer("id", "command.edit.arg.id").asRequired())
-                .publicCommand());
+    public Default(QuoteData quoteData) {
         this.quoteData = quoteData;
     }
 
     @Override
-    public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
+    public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         var quotes = quoteData.quotes(event.getGuild());
         var quoteById = quotes.byLocalId(event.getOption("id").getAsInt());
         if (quoteById.isEmpty()) {
@@ -42,7 +37,7 @@ public class Edit extends SimpleCommand {
 
         var snapshot = quote.snapshot();
         var sources = snapshot.sources().stream().map(Source::name)
-                .collect(Collectors.joining("\n"));
+                              .collect(Collectors.joining("\n"));
         context.registerModal(ModalHandler.builder("command.edit.modal.label")
                 .addInput(TextInputHandler.builder("content", "words.quote", TextInputStyle.PARAGRAPH)
                         .withValue(snapshot.content()))
@@ -60,5 +55,6 @@ public class Edit extends SimpleCommand {
                     modal.replyEmbeds(quote.snapshot().embed()).queue();
                     quotes.quoteChannel().getPost(quote).ifPresent(Post::update);
                 }).build());
+
     }
 }

@@ -1,12 +1,8 @@
 package de.chojo.shepquotes.data.elements;
 
-import de.chojo.jdautil.localization.ContextLocalizer;
-import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.util.MentionUtil;
 import de.chojo.shepquotes.data.dao.Source;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.utils.TimeFormat;
 
@@ -28,9 +24,5 @@ public record QuoteSnapshot(int id, int localId, long guildId, long ownerId, Str
                 .setTitle(String.format("#%s", localId()))
                 .setDescription(quote)
                 .build();
-    }
-
-    public Message message() {
-        return new MessageBuilder().setEmbeds(embed()).build();
     }
 }

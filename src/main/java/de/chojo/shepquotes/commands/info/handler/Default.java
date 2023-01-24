@@ -1,16 +1,15 @@
-package de.chojo.shepquotes.commands;
+package de.chojo.shepquotes.commands.info.handler;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.chojo.jdautil.command.CommandMeta;
-import de.chojo.jdautil.command.SimpleCommand;
+import de.chojo.jdautil.interactions.slash.structure.handler.SlashHandler;
 import de.chojo.jdautil.localization.util.LocalizedEmbedBuilder;
 import de.chojo.jdautil.localization.util.Replacement;
 import de.chojo.jdautil.util.Colors;
-import de.chojo.jdautil.wrapper.SlashCommandContext;
+import de.chojo.jdautil.wrapper.EventContext;
 import de.chojo.shepquotes.config.Configuration;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -23,7 +22,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -33,10 +31,9 @@ import java.util.stream.Collectors;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class Info extends SimpleCommand {
-    //private static final String ART = "**SmartieFox ☆*:.｡.o(≧▽≦)o.｡.:*☆**\n[Twitter](https://twitter.com/smartiefoxart) [Twitch](https://www.twitch.tv/smartiefox)";
+public class Default implements SlashHandler {
     private static final String SOURCE = "[rainbowdashlabs/shep-quotes](https://github.com/RainbowDashLabs/shep-quotes)";
-    private static final Logger log = getLogger(Info.class);
+    private static final Logger log = getLogger(Default.class);
     private final HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
     private final ObjectMapper mapper = new ObjectMapper()
             .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
@@ -46,37 +43,24 @@ public class Info extends SimpleCommand {
     private String contributors;
     private Instant lastFetch = Instant.MIN;
 
-
-    public Info(String version, Configuration configuration) {
-        super(CommandMeta.builder("info", "command.info.description"));
+    public Default(String version, Configuration configuration) {
         this.version = version;
         this.configuration = configuration;
     }
 
-    public static Info create(Configuration configuration) {
-        var version = "undefined";
-        try (var input = Info.class.getClassLoader().getResourceAsStream("version")) {
-            version = new String(input.readAllBytes(), StandardCharsets.UTF_8).trim();
-        } catch (IOException e) {
-            log.error("Could not determine version.");
-        }
-        return new Info(version, configuration);
-    }
-
-
     @Override
-    public void onSlashCommand(SlashCommandInteractionEvent event, SlashCommandContext context) {
+    public void onSlashCommand(SlashCommandInteractionEvent event, EventContext context) {
         event.replyEmbeds(getResponse(event, context)).queue();
     }
 
     @NotNull
-    private MessageEmbed getResponse(SlashCommandInteractionEvent event, SlashCommandContext context) {
+    private MessageEmbed getResponse(SlashCommandInteractionEvent event, EventContext context) {
         if (contributors == null || lastFetch.isBefore(Instant.now().minus(5, ChronoUnit.MINUTES))) {
             var request = HttpRequest.newBuilder().GET()
-                    .uri(URI.create("https://api.github.com/repos/rainbowdashlabs/shep-quotes/contributors?anon=1"))
-                    .header("accept", "application/vnd.github.v3+json")
-                    .header("User-Agent", "reputation-bot")
-                    .build();
+                                     .uri(URI.create("https://api.github.com/repos/rainbowdashlabs/shep-quotes/contributors?anon=1"))
+                                     .header("accept", "application/vnd.github.v3+json")
+                                     .header("User-Agent", "reputation-bot")
+                                     .build();
 
             List<Contributor> contributors;
             try {
@@ -91,10 +75,10 @@ public class Info extends SimpleCommand {
                 if (ContributorType.BOT == contributor.type) continue;
 
                 var profile = HttpRequest.newBuilder().GET()
-                        .uri(URI.create(contributor.url))
-                        .header("accept", "application/vnd.github.v3+json")
-                        .header("User-Agent", "shep-quotes")
-                        .build();
+                                         .uri(URI.create(contributor.url))
+                                         .header("accept", "application/vnd.github.v3+json")
+                                         .header("User-Agent", "shep-quotes")
+                                         .build();
 
                 try {
                     var response = client.send(profile, HttpResponse.BodyHandlers.ofString());
@@ -120,7 +104,7 @@ public class Info extends SimpleCommand {
                 .build();
     }
 
-    private String getLinks(SlashCommandContext context) {
+    private String getLinks(EventContext context) {
         var links = List.of(
                 getLink(context, "command.info.inviteMe", configuration.links().invite()),
                 getLink(context, "command.info.support", configuration.links().support()),
@@ -131,12 +115,12 @@ public class Info extends SimpleCommand {
         return String.join(" ᠅ ", links);
     }
 
-    private String getLink(SlashCommandContext context, @PropertyKey(resourceBundle = "locale") String target, String url) {
+    private String getLink(EventContext context, @PropertyKey(resourceBundle = "locale") String target, String url) {
         return context.localize("words.link", Replacement.create("TARGET", String.format("$%s$", target)),
                 Replacement.create("URL", url));
     }
 
-    private String getUntranslatedLink(SlashCommandContext context, String target, String url) {
+    private String getUntranslatedLink(EventContext context, String target, String url) {
         return context.localize("words.link",
                 Replacement.create("TARGET", target),
                 Replacement.create("URL", url));
