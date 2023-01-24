@@ -14,7 +14,6 @@ repositories {
 }
 
 dependencies {
-    implementation("de.chojo", "cjda-util", "2.6.2+alpha.13-DEV")
 
     // database
     implementation("org.postgresql", "postgresql", "42.5.1")
@@ -24,6 +23,11 @@ dependencies {
     implementation("org.apache.logging.log4j", "log4j-core", "2.19.0")
     implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.19.0")
     implementation("club.minnced", "discord-webhooks", "0.8.2")
+
+    implementation("de.chojo", "cjda-util", "2.6.2+alpha.13-DEV"){
+        exclude(group = "club.minnced", module = "opus-java")
+        exclude(group = "org.slf4j", module = "slf4j-api")
+    }
 
     // utils
     implementation("org.apache.commons", "commons-lang3", "3.12.0")
