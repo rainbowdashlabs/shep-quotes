@@ -24,7 +24,7 @@ dependencies {
     implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.19.0")
     implementation("club.minnced", "discord-webhooks", "0.8.2")
 
-    implementation("de.chojo", "cjda-util", "2.6.2+alpha.13-DEV"){
+    implementation("de.chojo", "cjda-util", "2.6.2+alpha.15-SNAPSHOT"){
         exclude(group = "club.minnced", module = "opus-java")
         exclude(group = "org.slf4j", module = "slf4j-api")
     }
