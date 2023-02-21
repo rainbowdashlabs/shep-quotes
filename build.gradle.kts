@@ -20,8 +20,8 @@ dependencies {
 
     // Logging
     implementation("org.slf4j", "slf4j-api", "2.0.6")
-    implementation("org.apache.logging.log4j", "log4j-core", "2.19.0")
-    implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.19.0")
+    implementation("org.apache.logging.log4j", "log4j-core", "2.20.0")
+    implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.20.0")
     implementation("club.minnced", "discord-webhooks", "0.8.2")
 
     implementation("de.chojo", "cjda-util", "2.7.8+beta.2"){
