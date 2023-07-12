@@ -2,7 +2,7 @@
   "baseBranches": ["main"],
   "extends": [
     "github>rainbowdashlabs/rainbowdashlabs//.github/renovate_default"
-  ]
+  ],
   "packageRules": [
     {
       "groupName": "log4j",
