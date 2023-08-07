@@ -30,7 +30,7 @@ dependencies {
     }
 
     // utils
-    implementation("org.apache.commons", "commons-lang3", "3.12.0")
+    implementation("org.apache.commons", "commons-lang3", "3.13.0")
     implementation("de.chojo", "sql-util", "1.5.0")
     implementation("de.chojo", "log-util", "1.0.1"){
         exclude(group="org.apache.logging.log4j")
