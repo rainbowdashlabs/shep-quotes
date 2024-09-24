@@ -35,7 +35,7 @@ dependencies {
     implementation("de.chojo", "log-util", "1.0.1"){
         exclude(group="org.apache.logging.log4j")
     }
-    implementation("com.google.guava", "guava", "32.1.3-jre")
+    implementation("com.google.guava", "guava", "33.3.1-jre")
 
     // unit testing
     testImplementation(platform("org.junit:junit-bom:5.10.3"))
