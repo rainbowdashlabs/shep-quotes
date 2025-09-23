@@ -16,7 +16,7 @@ repositories {
 dependencies {
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.5")
+    implementation("org.postgresql", "postgresql", "42.7.8")
 
     // Logging
     implementation("org.slf4j", "slf4j-api", "2.0.9")
