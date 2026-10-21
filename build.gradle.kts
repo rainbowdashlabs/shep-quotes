@@ -16,29 +16,29 @@ repositories {
 dependencies {
 
     // database
-    implementation("org.postgresql", "postgresql", "42.7.13")
+    implementation("org.postgresql", "postgresql", "42.7.14")
 
     // Logging
-    implementation("org.slf4j", "slf4j-api", "2.0.19")
+    implementation("org.slf4j", "slf4j-api", "2.0.20")
     implementation("org.apache.logging.log4j", "log4j-core", "2.26.1")
     implementation("org.apache.logging.log4j", "log4j-slf4j2-impl", "2.26.1")
     implementation("club.minnced", "discord-webhooks", "0.8.4")
 
-    implementation("de.chojo", "cjda-util", "2.7.8+beta.2"){
+    implementation("de.chojo", "cjda-util", "2.15.0+jda-6.3.0"){
         exclude(group = "club.minnced", module = "opus-java")
         exclude(group = "org.slf4j", module = "slf4j-api")
     }
 
     // utils
-    implementation("org.apache.commons", "commons-lang3", "3.20.0")
+    implementation("org.apache.commons", "commons-lang3", "3.21.0")
     implementation("de.chojo", "sql-util", "1.5.0")
     implementation("de.chojo", "log-util", "1.0.1"){
         exclude(group="org.apache.logging.log4j")
     }
-    implementation("com.google.guava", "guava", "33.7.1-jre")
+    implementation("com.google.guava", "guava", "33.7.2-jre")
 
     // unit testing
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation(platform("org.junit:junit-bom:5.14.4"))
     testImplementation("org.junit.jupiter", "junit-jupiter")
 }
 
